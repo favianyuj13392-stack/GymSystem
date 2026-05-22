@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Html5Qrcode } from 'html5-qrcode';
 import { procesarAcceso, obtenerSociosActivosEnGym, registrarSalida } from './actions';
 
 type StatusType = 'idle' | 'loading' | 'concedido' | 'vencido' | 'no_registrado' | 'error';
@@ -20,7 +19,8 @@ export default function RecepcionControlPage() {
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   const isProcessingRef = useRef(false);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const scannerRef = useRef<any>(null);
 
   // 1. Cargar Socios Activos Iniciales
   useEffect(() => {
@@ -31,10 +31,16 @@ export default function RecepcionControlPage() {
     fetchActivos();
   }, []);
 
-  // 2. Inicializar Escáner de Cámara
+  // 2. Inicializar Escáner de Cámara (import dinámico para evitar errores SSR en Vercel)
   useEffect(() => {
+    let isMounted = true;
+
     const initScanner = async () => {
       try {
+        // Import dinámico: solo se ejecuta en el browser, nunca en el servidor
+        const { Html5Qrcode } = await import('html5-qrcode');
+        if (!isMounted) return;
+
         scannerRef.current = new Html5Qrcode("qr-reader");
         await scannerRef.current.start(
           { facingMode: "environment" },
@@ -43,23 +49,24 @@ export default function RecepcionControlPage() {
             qrbox: { width: 250, height: 250 },
             aspectRatio: 1.0,
           },
-          (decodedText) => {
+          (decodedText: string) => {
             handleScan(decodedText);
           },
-          (errorMessage) => {
+          () => {
             // Ignorar errores continuos de lectura frame por frame
           }
         );
-        setCameraError(false);
+        if (isMounted) setCameraError(false);
       } catch (err) {
         console.error("Error iniciando cámara:", err);
-        setCameraError(true);
+        if (isMounted) setCameraError(true);
       }
     };
 
     initScanner();
 
     return () => {
+      isMounted = false;
       if (scannerRef.current && scannerRef.current.isScanning) {
         scannerRef.current.stop().catch(console.error);
       }
