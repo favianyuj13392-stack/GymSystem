@@ -54,7 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Header/Logo */}
         <div className="h-20 flex items-center px-8 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg shadow-red-500/20">
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
             <span className="font-black text-xl text-white tracking-tight">GymControl</span>
@@ -72,16 +72,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${
                   isActive 
-                    ? 'bg-blue-600/10 text-blue-400' 
+                    ? 'bg-red-600/10 text-red-400' 
                     : 'hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <div className={`${isActive ? 'text-blue-500' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                <div className={`${isActive ? 'text-red-500' : 'text-slate-500 group-hover:text-slate-300'}`}>
                   {item.icon}
                 </div>
-                <span className={`font-semibold ${isActive ? 'text-blue-400' : ''}`}>{item.name}</span>
+                <span className={`font-semibold ${isActive ? 'text-red-400' : ''}`}>{item.name}</span>
                 {isActive && (
-                  <div className="ml-auto w-1.5 h-6 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+                  <div className="ml-auto w-1.5 h-6 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
                 )}
               </Link>
             );
@@ -118,11 +118,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={`flex-1 flex flex-col items-center justify-center py-3 relative ${
-                isActive ? 'text-blue-400' : 'hover:text-white'
+                isActive ? 'text-red-400' : 'hover:text-white'
               }`}
             >
               {isActive && (
-                <div className="absolute top-0 inset-x-0 h-0.5 bg-blue-500 mx-auto w-8 shadow-[0_2px_8px_rgba(59,130,246,0.8)]"></div>
+                <div className="absolute top-0 inset-x-0 h-0.5 bg-red-500 mx-auto w-8 shadow-[0_2px_8px_rgba(239,68,68,0.8)]"></div>
               )}
               <div className="mb-1">{item.icon}</div>
               <span className="text-[10px] font-bold tracking-wide">{item.name}</span>

@@ -184,7 +184,7 @@ export default function NuevoSocioPage() {
 
           <button 
             onClick={resetSuccess}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors shadow-md shadow-blue-500/20"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors shadow-md shadow-red-500/20"
           >
             Registrar otro socio
           </button>
@@ -207,7 +207,7 @@ export default function NuevoSocioPage() {
             {/* Columna Izquierda: Datos Personales */}
             <div className="lg:col-span-7 p-6 lg:p-10 border-b lg:border-b-0 lg:border-r border-slate-100">
               <h3 className="text-lg font-semibold text-slate-800 mb-6 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 Información del Socio
               </h3>
               
@@ -220,7 +220,7 @@ export default function NuevoSocioPage() {
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white"
                     placeholder="Ej. Juan Pérez"
                     disabled={status === 'uploading' || status === 'saving'}
                   />
@@ -235,7 +235,7 @@ export default function NuevoSocioPage() {
                       name="dni"
                       value={formData.dni}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white"
                       placeholder="Ej. 12345678"
                       disabled={status === 'uploading' || status === 'saving'}
                     />
@@ -248,7 +248,7 @@ export default function NuevoSocioPage() {
                       name="telefono"
                       value={formData.telefono}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white"
                       placeholder="Ej. 70012345"
                       disabled={status === 'uploading' || status === 'saving'}
                     />
@@ -267,7 +267,7 @@ export default function NuevoSocioPage() {
                       name="plan_id"
                       value={formData.plan_id}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-slate-50 focus:bg-white appearance-none cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white appearance-none cursor-pointer"
                       disabled={status === 'uploading' || status === 'saving'}
                     >
                       <option value="" disabled>Seleccione un plan</option>
@@ -285,7 +285,7 @@ export default function NuevoSocioPage() {
             {/* Columna Derecha: Foto de Perfil */}
             <div className="lg:col-span-5 p-6 lg:p-10 bg-slate-50/50 flex flex-col">
               <h3 className="text-lg font-semibold text-slate-800 mb-6 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 Foto de Perfil *
               </h3>
               
@@ -357,14 +357,14 @@ export default function NuevoSocioPage() {
                 </div>
               )}
               {status === 'uploading' && (
-                <div className="text-blue-600 flex items-center font-medium">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <div className="text-red-600 flex items-center font-medium">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                   Subiendo imagen a Cloudinary...
                 </div>
               )}
               {status === 'saving' && (
-                <div className="text-blue-600 flex items-center font-medium">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <div className="text-red-600 flex items-center font-medium">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                   Guardando socio en la base de datos...
                 </div>
               )}
@@ -373,7 +373,7 @@ export default function NuevoSocioPage() {
             <button
               type="submit"
               disabled={status === 'uploading' || status === 'saving'}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/30 disabled:opacity-70 flex items-center justify-center min-w-[200px]"
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-red-500/30 disabled:opacity-70 flex items-center justify-center min-w-[200px]"
             >
               {status === 'uploading' || status === 'saving' ? 'Procesando...' : 'Registrar Socio'}
             </button>

@@ -34,7 +34,7 @@ export default function CarnetDigitalPage({ params }: { params: Promise<{ id: st
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-500"></div>
       </div>
     );
   }
@@ -60,7 +60,7 @@ export default function CarnetDigitalPage({ params }: { params: Promise<{ id: st
       <div className="w-full max-w-sm bg-white rounded-[2rem] overflow-hidden shadow-2xl relative">
         
         {/* Banner Superior con color según estado */}
-        <div className={`h-32 ${estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-blue-700' : 'bg-gradient-to-br from-red-500 to-red-700'}`}>
+        <div className={`h-32 ${estado === 'activo' ? 'bg-gradient-to-br from-emerald-500 to-emerald-700' : 'bg-gradient-to-br from-red-500 to-red-700'}`}>
         </div>
 
         {/* Foto Perfil Circular */}
@@ -94,7 +94,7 @@ export default function CarnetDigitalPage({ params }: { params: Promise<{ id: st
         <div className="bg-slate-50 px-6 py-8 border-t border-slate-100 flex flex-col items-center">
           <p className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-4">Código de Acceso</p>
           
-          <div className={`p-4 bg-white rounded-2xl shadow-sm border-2 ${estado === 'activo' ? 'border-blue-100' : 'border-red-100'}`}>
+          <div className={`p-4 bg-white rounded-2xl shadow-sm border-2 ${estado === 'activo' ? 'border-emerald-100' : 'border-red-100'}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={qrImageUrl} alt="QR de Acceso" className="w-48 h-48 object-contain" />
           </div>

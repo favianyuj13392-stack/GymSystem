@@ -144,7 +144,7 @@ export default function RecepcionControlPage() {
     if (status === 'idle') {
       return (
         <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center animate-in fade-in zoom-in duration-300">
-          <svg className="w-24 h-24 mb-4 opacity-50 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-8v4h8v-4zm-6-6h.01M12 12h.01M16 12h.01M12 16h.01M16 16h.01M8 12h.01M8 16h.01M4 8h16M4 16h16M4 12h16m-2-8H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2z" /></svg>
+          <svg className="w-24 h-24 mb-4 opacity-50 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-8v4h8v-4zm-6-6h.01M12 12h.01M16 12h.01M12 16h.01M16 16h.01M8 12h.01M8 16h.01M4 8h16M4 16h16M4 12h16m-2-8H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2z" /></svg>
           <h2 className="text-3xl font-semibold text-slate-700">Listo para escanear</h2>
           <p className="mt-2 text-lg">Muestre el código QR del socio a la cámara</p>
         </div>
@@ -153,8 +153,8 @@ export default function RecepcionControlPage() {
 
     if (status === 'loading') {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-blue-500">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-blue-500 mb-6"></div>
+        <div className="flex flex-col items-center justify-center h-full text-red-500">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-red-500 mb-6"></div>
           <h2 className="text-4xl font-bold animate-pulse">Verificando Identidad...</h2>
         </div>
       );

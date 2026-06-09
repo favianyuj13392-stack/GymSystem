@@ -64,8 +64,8 @@ export default function AnaliticasRetencionPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Tarjeta Socios Activos */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full blur-2xl"></div>
-            <div className="w-16 h-16 rounded-2xl bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/30 relative z-10">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-50 rounded-full blur-2xl"></div>
+            <div className="w-16 h-16 rounded-2xl bg-red-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30 relative z-10">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
             </div>
             <div className="relative z-10">
@@ -117,7 +117,7 @@ export default function AnaliticasRetencionPage() {
           {/* Gráfico de Horarios Concurrentes (Ocupa 2 columnas) */}
           <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-slate-200 p-8 flex flex-col">
             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
-              <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
               Concurrencia por Hora
             </h3>
             <p className="text-slate-500 mb-8">Volumen histórico de asistencias agrupadas por hora del día.</p>
@@ -134,16 +134,16 @@ export default function AnaliticasRetencionPage() {
                   const isPico = maxConteo > 0 && h.conteo === maxConteo;
                   const isMuerta = maxConteo > 0 && h.conteo > 0 && h.conteo === minConteo;
 
-                  let barColor = "bg-blue-200 group-hover:bg-blue-300";
+                  let barColor = "bg-red-200 group-hover:bg-red-300";
                   let labelColor = "text-slate-400";
                   if (isPico) {
-                    barColor = "bg-red-500 group-hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+                    barColor = "bg-red-600 group-hover:bg-red-700 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
                     labelColor = "text-red-600 font-bold";
                   } else if (isMuerta) {
                     barColor = "bg-green-400 group-hover:bg-green-500";
                     labelColor = "text-green-600 font-bold";
                   } else if (h.conteo > 0) {
-                    barColor = "bg-blue-500 group-hover:bg-blue-600";
+                    barColor = "bg-red-50 group-hover:bg-red-100 border border-red-200";
                   }
 
                   return (
@@ -171,8 +171,8 @@ export default function AnaliticasRetencionPage() {
             
             {!loading && maxConteo > 0 && (
               <div className="mt-8 flex flex-wrap justify-center gap-6 pt-6 border-t border-slate-100 text-sm">
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500"></div><span className="font-medium text-slate-700">Hora Pico</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div><span className="font-medium text-slate-700">Trafico Normal</span></div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-600"></div><span className="font-medium text-slate-700">Hora Pico</span></div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-300"></div><span className="font-medium text-slate-700">Trafico Normal</span></div>
                 <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-400"></div><span className="font-medium text-slate-700">Hora Muerta</span></div>
               </div>
             )}
