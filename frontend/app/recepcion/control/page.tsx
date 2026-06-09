@@ -17,6 +17,7 @@ export default function RecepcionControlPage() {
   const [sociosActivos, setSociosActivos] = useState<any[]>([]);
   const [cameraError, setCameraError] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'scanner' | 'list'>('scanner');
 
   const isProcessingRef = useRef(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,13 +241,40 @@ export default function RecepcionControlPage() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen lg:h-[calc(100vh-4rem)] lg:m-8 gap-8 bg-slate-50">
+    <div className="flex flex-col lg:flex-row h-screen lg:h-[calc(100vh-4rem)] lg:m-8 lg:gap-8 bg-slate-50">
       
+      {/* Pestañas para mobile/tablet */}
+      <div className="flex lg:hidden bg-slate-100 p-1.5 rounded-2xl mx-4 mt-4 shrink-0 border border-slate-200">
+        <button
+          onClick={() => setActiveTab('scanner')}
+          className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${
+            activeTab === 'scanner'
+              ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Escanear / Acceso
+        </button>
+        <button
+          onClick={() => setActiveTab('list')}
+          className={`flex-1 py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${
+            activeTab === 'list'
+              ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Socios en el Gym
+          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
+            {sociosActivos.length}
+          </span>
+        </button>
+      </div>
+
       {/* Columna Izquierda: Escáner y Resultados */}
-      <div className="flex-1 flex flex-col gap-6 h-full min-w-0">
+      <div className={`flex-1 flex flex-col gap-6 h-full min-w-0 p-4 lg:p-0 ${activeTab === 'scanner' ? 'flex' : 'hidden lg:flex'}`}>
         
         {/* Lector de QR de Video */}
-        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 flex flex-col items-center justify-center relative min-h-[300px]">
+        <div className={`bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 flex flex-col items-center justify-center relative min-h-[300px] ${status === 'idle' ? 'block' : 'hidden lg:block'}`}>
           {cameraError ? (
             <div className="p-8 text-center text-red-500">
               <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -273,7 +301,7 @@ export default function RecepcionControlPage() {
       </div>
 
       {/* Columna Derecha: Socios en el Gym */}
-      <div className="w-full lg:w-[420px] flex flex-col bg-white lg:rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 h-[500px] lg:h-full">
+      <div className={`w-full lg:w-[420px] flex flex-col bg-white lg:rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 h-full lg:h-full ${activeTab === 'list' ? 'flex p-4 lg:p-0' : 'hidden lg:flex'}`}>
         <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">

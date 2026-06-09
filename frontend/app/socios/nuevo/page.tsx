@@ -220,7 +220,7 @@ export default function NuevoSocioPage() {
                     name="nombre"
                     value={formData.nombre}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white text-slate-900"
                     placeholder="Ej. Juan Pérez"
                     disabled={status === 'uploading' || status === 'saving'}
                   />
@@ -235,7 +235,7 @@ export default function NuevoSocioPage() {
                       name="dni"
                       value={formData.dni}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white text-slate-900"
                       placeholder="Ej. 12345678"
                       disabled={status === 'uploading' || status === 'saving'}
                     />
@@ -248,7 +248,7 @@ export default function NuevoSocioPage() {
                       name="telefono"
                       value={formData.telefono}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white text-slate-900"
                       placeholder="Ej. 70012345"
                       disabled={status === 'uploading' || status === 'saving'}
                     />
@@ -267,7 +267,7 @@ export default function NuevoSocioPage() {
                       name="plan_id"
                       value={formData.plan_id}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white appearance-none cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all bg-slate-50 focus:bg-white appearance-none cursor-pointer text-slate-900"
                       disabled={status === 'uploading' || status === 'saving'}
                     >
                       <option value="" disabled>Seleccione un plan</option>
