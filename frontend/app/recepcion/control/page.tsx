@@ -180,14 +180,14 @@ export default function RecepcionControlPage() {
             <h1 className="text-5xl lg:text-7xl font-black mb-2 tracking-tight drop-shadow-md text-center">¡ACCESO CONCEDIDO!</h1>
             <h2 className="text-4xl font-bold mb-6 drop-shadow-sm">{resultado?.socio?.nombre}</h2>
             
-            <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
-              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 text-center">
-                <p className="text-sm uppercase tracking-widest opacity-90 mb-1 font-semibold">Plan Actual</p>
-                <p className="text-2xl font-bold">{resultado?.membresia?.planes?.nombre || 'Activo'}</p>
+            <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 w-full max-w-2xl">
+              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 text-center min-w-0">
+                <p className="text-xs sm:text-sm uppercase tracking-widest opacity-90 mb-1 font-semibold">Plan Actual</p>
+                <p className="text-base sm:text-2xl font-bold break-words">{resultado?.membresia?.planes?.nombre || 'Activo'}</p>
               </div>
-              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 text-center">
-                <p className="text-sm uppercase tracking-widest opacity-90 mb-1 font-semibold">Vencimiento</p>
-                <p className="text-2xl font-bold">{resultado?.membresia?.fecha_fin}</p>
+              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 text-center min-w-0">
+                <p className="text-xs sm:text-sm uppercase tracking-widest opacity-90 mb-1 font-semibold">Vencimiento</p>
+                <p className="text-base sm:text-2xl font-bold break-words">{resultado?.membresia?.fecha_fin}</p>
               </div>
             </div>
           </div>
