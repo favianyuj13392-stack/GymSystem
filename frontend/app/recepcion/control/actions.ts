@@ -14,6 +14,7 @@ export async function procesarAcceso(codigoQr: string) {
       .from('socios')
       .select('*')
       .eq(matchColumn, codigoQr)
+      .eq('activo', true)
       .single();
 
     if (socioError || !socio) {
@@ -22,6 +23,7 @@ export async function procesarAcceso(codigoQr: string) {
           .from('socios')
           .select('*')
           .eq('codigo_qr', codigoQr)
+          .eq('activo', true)
           .single();
         if (retryError || !socioRetry) {
           return { status: 'no_registrado' };

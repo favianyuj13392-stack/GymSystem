@@ -18,7 +18,7 @@ export async function obtenerListaSocios(busqueda?: string, filtroEstado?: strin
           duracion_meses
         )
       )
-    `);
+    `).eq('activo', true);
 
     if (busqueda) {
       query = query.or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`);
@@ -158,5 +158,55 @@ export async function renovarMembresia(socioId: string, planId: string, montoPag
   } catch (error: any) {
     console.error('Error interno renovando membresía:', error);
     return { success: false, error: error.message };
+  }
+}
+
+export async function actualizarSocio(id: string, datosSocio: {
+  nombre: string;
+  dni: string;
+  telefono: string;
+  foto_url?: string;
+}) {
+  try {
+    const updateData: any = {
+      nombre: datosSocio.nombre,
+      dni: datosSocio.dni,
+      telefono: datosSocio.telefono,
+    };
+    if (datosSocio.foto_url) {
+      updateData.foto_url = datosSocio.foto_url;
+    }
+
+    const { error } = await supabaseServer
+      .from('socios')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error al actualizar socio:', error);
+      return { success: false, error: 'No se pudo actualizar el socio. Es probable que el DNI ya esté registrado.' };
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error en actualizarSocio:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function eliminarSocioLogico(id: string) {
+  try {
+    const { error } = await supabaseServer
+      .from('socios')
+      .update({ activo: false })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error al desactivar socio:', error);
+      return { success: false, error: 'No se pudo dar de baja al socio.' };
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error en eliminarSocioLogico:', err);
+    return { success: false, error: err.message };
   }
 }
