@@ -31,10 +31,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
-  const isProtected = request.nextUrl.pathname.startsWith('/admin') || 
-                      request.nextUrl.pathname.startsWith('/recepcion') ||
-                      request.nextUrl.pathname.startsWith('/socios') && !request.nextUrl.pathname.startsWith('/socio/')
+  const pathname = request.nextUrl.pathname
+  const isAuthRoute = pathname.startsWith('/login')
+  const isProtected = pathname.startsWith('/admin') || 
+                      pathname.startsWith('/recepcion') ||
+                      pathname.startsWith('/socios') && !pathname.startsWith('/socio/')
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
@@ -42,10 +43,39 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthRoute) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/admin/socios'
-    return NextResponse.redirect(url)
+  if (user) {
+    if (isAuthRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin/socios'
+      return NextResponse.redirect(url)
+    }
+
+    // Intercept admin-only routes for employees
+    const isAdminOnlyRoute = pathname.startsWith('/admin/dashboard') || 
+                             pathname.startsWith('/admin/empleados') ||
+                             pathname.startsWith('/admin/pagos') ||
+                             pathname.startsWith('/admin/analiticas')
+
+    if (isAdminOnlyRoute) {
+      try {
+        const { data: empleado } = await supabase
+          .from('empleados')
+          .select('rol')
+          .eq('id', user.id)
+          .single()
+        
+        // Safe fallback to 'admin' if table/record is not found to prevent lockout/crashes
+        const role = empleado?.rol || 'admin'
+        
+        if (role === 'empleado') {
+          const url = request.nextUrl.clone()
+          url.pathname = '/admin/socios'
+          return NextResponse.redirect(url)
+        }
+      } catch (err) {
+        console.error('Error in middleware role check, falling back to admin:', err)
+      }
+    }
   }
 
   return supabaseResponse

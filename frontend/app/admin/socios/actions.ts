@@ -91,7 +91,7 @@ export async function obtenerPlanesDisponibles() {
   return data;
 }
 
-export async function renovarMembresia(socioId: string, planId: string, montoPagado: number) {
+export async function renovarMembresia(socioId: string, planId: string, montoPagado: number, metodoPago: string = 'Efectivo') {
   try {
     // 1. Cambiar el estado de las membresías previas activas a "reemplazado" o "vencido"
     await supabaseServer
@@ -147,7 +147,7 @@ export async function renovarMembresia(socioId: string, planId: string, montoPag
         socio_id: socioId,
         membresia_id: nuevaMembresia.id,
         monto: montoPagado,
-        // Asume que la tabla pagos tiene fecha_hora o fecha. Supabase auto-genera created_at.
+        metodo_pago: metodoPago,
       });
 
     if (pagoError) {
@@ -208,5 +208,24 @@ export async function eliminarSocioLogico(id: string) {
   } catch (err: any) {
     console.error('Error en eliminarSocioLogico:', err);
     return { success: false, error: err.message };
+  }
+}
+
+export async function obtenerAsistenciasSocio(socioId: string) {
+  try {
+    const { data, error } = await supabaseServer
+      .from('asistencias')
+      .select('*')
+      .eq('socio_id', socioId)
+      .order('registrado_at', { ascending: false });
+
+    if (error) {
+      console.error('Error al obtener asistencias del socio:', error);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.error('Error en obtenerAsistenciasSocio:', err);
+    return [];
   }
 }

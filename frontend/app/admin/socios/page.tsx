@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { obtenerListaSocios, obtenerPlanesDisponibles, renovarMembresia, actualizarSocio, eliminarSocioLogico } from './actions';
+import { obtenerListaSocios, obtenerPlanesDisponibles, renovarMembresia, actualizarSocio, eliminarSocioLogico, obtenerAsistenciasSocio } from './actions';
 
 export default function AdminSociosPage() {
   const [socios, setSocios] = useState<any[]>([]);
@@ -20,6 +20,13 @@ export default function AdminSociosPage() {
   const [montoPago, setMontoPago] = useState<number | string>('');
   const [renovando, setRenovando] = useState(false);
   const [errorRenovacion, setErrorRenovacion] = useState('');
+  const [metodoPago, setMetodoPago] = useState('Efectivo');
+
+  // Modal de Asistencias
+  const [isAsistenciasModalOpen, setIsAsistenciasModalOpen] = useState(false);
+  const [socioAsistencias, setSocioAsistencias] = useState<any>(null);
+  const [asistencias, setAsistencias] = useState<any[]>([]);
+  const [loadingAsistencias, setLoadingAsistencias] = useState(false);
 
   // Modal de Edición
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -80,6 +87,22 @@ export default function AdminSociosPage() {
     setErrorRenovacion('');
     setPlanSeleccionado('');
     setMontoPago('');
+    setMetodoPago('Efectivo');
+  };
+
+  const abrirModalAsistencias = async (socio: any) => {
+    setSocioAsistencias(socio);
+    setIsAsistenciasModalOpen(true);
+    setLoadingAsistencias(true);
+    const data = await obtenerAsistenciasSocio(socio.id);
+    setAsistencias(data);
+    setLoadingAsistencias(false);
+  };
+
+  const cerrarModalAsistencias = () => {
+    setIsAsistenciasModalOpen(false);
+    setSocioAsistencias(null);
+    setAsistencias([]);
   };
 
   const cerrarModal = () => {
@@ -205,7 +228,7 @@ export default function AdminSociosPage() {
     setRenovando(true);
     setErrorRenovacion('');
 
-    const res = await renovarMembresia(socioARenovar.id, planSeleccionado, Number(montoPago));
+    const res = await renovarMembresia(socioARenovar.id, planSeleccionado, Number(montoPago), metodoPago);
     
     setRenovando(false);
 
@@ -239,7 +262,7 @@ export default function AdminSociosPage() {
             <p className="text-slate-500 mt-1">Administra los registros, estado de membresías y renovaciones.</p>
           </div>
           <button 
-            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition-colors flex items-center"
+            className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-sm transition-colors flex items-center"
             onClick={() => window.location.href = '/socios/nuevo'}
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -258,7 +281,7 @@ export default function AdminSociosPage() {
               placeholder="Buscar por nombre o DNI..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-slate-50 focus:bg-white"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-colors bg-slate-50 focus:bg-white"
             />
           </div>
 
@@ -298,7 +321,7 @@ export default function AdminSociosPage() {
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
                       <div className="flex flex-col items-center justify-center">
-                        <svg className="animate-spin h-8 w-8 text-red-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <svg className="animate-spin h-8 w-8 text-amber-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         Cargando registros...
                       </div>
                     </td>
@@ -355,13 +378,20 @@ export default function AdminSociosPage() {
                             ACTIVO
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                             VENCIDO
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => abrirModalAsistencias(socio)}
+                          className="bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 p-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer"
+                          title="Historial de Asistencia"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </button>
                         <button
                           onClick={() => abrirModalEdicion(socio)}
                           className="bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 p-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer"
@@ -381,14 +411,14 @@ export default function AdminSociosPage() {
                         {socio.estadoCalculado !== 'activo' && (
                           <button 
                             onClick={() => abrirModalRenovacion(socio)}
-                            className="bg-red-50 hover:bg-red-600 hover:text-white text-red-600 border border-red-200 hover:border-transparent px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm cursor-pointer"
+                            className="bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-600 border border-amber-200 hover:border-transparent px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm cursor-pointer"
                           >
                             Renovar
                           </button>
                         )}
                         <button
                           onClick={() => abrirModalDesactivar(socio)}
-                          className="bg-white hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-200 hover:border-red-200 p-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer"
+                          className="bg-white hover:bg-amber-50 text-slate-400 hover:text-amber-600 border border-slate-200 hover:border-amber-200 p-2 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer"
                           title="Dar de Baja (Desactivar)"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -433,7 +463,7 @@ export default function AdminSociosPage() {
               </div>
 
               {errorRenovacion && (
-                <div className="mb-4 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
+                <div className="mb-4 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100">
                   {errorRenovacion}
                 </div>
               )}
@@ -445,7 +475,7 @@ export default function AdminSociosPage() {
                     required
                     value={planSeleccionado}
                     onChange={(e) => setPlanSeleccionado(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white cursor-pointer"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white cursor-pointer"
                     disabled={renovando || planes.length === 0}
                   >
                     <option value="" disabled>Selecciona un plan</option>
@@ -470,11 +500,25 @@ export default function AdminSociosPage() {
                       step="0.1"
                       value={montoPago}
                       onChange={(e) => setMontoPago(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-white font-medium"
+                      className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white font-medium"
                       placeholder="0.00"
                       disabled={renovando}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Método de Pago</label>
+                  <select
+                    required
+                    value={metodoPago}
+                    onChange={(e) => setMetodoPago(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white cursor-pointer font-medium"
+                    disabled={renovando}
+                  >
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                  </select>
                 </div>
               </div>
 
@@ -490,7 +534,7 @@ export default function AdminSociosPage() {
                 <button
                   type="submit"
                   disabled={renovando}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium px-4 py-3 shadow-md shadow-red-500/20 transition-all flex items-center justify-center"
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-medium px-4 py-3 shadow-md shadow-amber-500/20 transition-all flex items-center justify-center"
                 >
                   {renovando ? (
                     <>
@@ -522,7 +566,7 @@ export default function AdminSociosPage() {
 
             <form onSubmit={handleEditSubmit} className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
               {editError && (
-                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
+                <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100">
                   {editError}
                 </div>
               )}
@@ -536,7 +580,7 @@ export default function AdminSociosPage() {
                     required
                     value={editNombre}
                     onChange={(e) => setEditNombre(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
                     disabled={editStatus === 'uploading' || editStatus === 'saving'}
                   />
                 </div>
@@ -550,7 +594,7 @@ export default function AdminSociosPage() {
                       required
                       value={editDni}
                       onChange={(e) => setEditDni(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
                       disabled={editStatus === 'uploading' || editStatus === 'saving'}
                     />
                   </div>
@@ -560,7 +604,7 @@ export default function AdminSociosPage() {
                       type="tel"
                       value={editTelefono}
                       onChange={(e) => setEditTelefono(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
                       disabled={editStatus === 'uploading' || editStatus === 'saving'}
                     />
                   </div>
@@ -633,7 +677,7 @@ export default function AdminSociosPage() {
                 <button
                   type="submit"
                   disabled={editStatus === 'uploading' || editStatus === 'saving'}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium px-4 py-3 shadow-md shadow-red-500/20 transition-all flex items-center justify-center cursor-pointer"
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-medium px-4 py-3 shadow-md shadow-amber-500/20 transition-all flex items-center justify-center cursor-pointer"
                 >
                   {editStatus === 'uploading' || editStatus === 'saving' ? (
                     <>
@@ -655,7 +699,7 @@ export default function AdminSociosPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden transform transition-all animate-in zoom-in-95 duration-200 p-6">
             <div className="text-center">
-              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">Dar de baja socio</h3>
@@ -676,7 +720,7 @@ export default function AdminSociosPage() {
               <button
                 onClick={handleDeactivateSubmit}
                 disabled={eliminando}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium px-4 py-3 shadow-md shadow-red-500/20 transition-all flex items-center justify-center cursor-pointer"
+                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-medium px-4 py-3 shadow-md shadow-amber-500/20 transition-all flex items-center justify-center cursor-pointer"
               >
                 {eliminando ? (
                   <>
@@ -687,6 +731,71 @@ export default function AdminSociosPage() {
                   'Confirmar Baja'
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Flotante de Historial de Asistencia */}
+      {isAsistenciasModalOpen && socioAsistencias && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 bg-slate-50">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-800">Historial de Asistencia</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">{socioAsistencias.nombre}</p>
+                </div>
+                <button onClick={cerrarModalAsistencias} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 shadow-sm cursor-pointer">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              {loadingAsistencias ? (
+                <div className="py-12 text-center text-slate-400">
+                  <svg className="animate-spin h-7 w-7 text-amber-500 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  Cargando historial...
+                </div>
+              ) : asistencias.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 font-medium">
+                  Este socio no registra asistencias.
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase">
+                      <th className="py-2.5">Fecha</th>
+                      <th className="py-2.5">Hora</th>
+                      <th className="py-2.5 text-right">Evento</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {asistencias.map((ast) => {
+                      const fecha = new Date(ast.registrado_at);
+                      const fechaFormat = fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                      const horaFormat = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                      
+                      return (
+                        <tr key={ast.id} className="text-sm">
+                          <td className="py-3 text-slate-700 font-medium">{fechaFormat}</td>
+                          <td className="py-3 text-slate-500 font-mono">{horaFormat}</td>
+                          <td className="py-3 text-right">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              ast.tipo === 'entrada'
+                                ? 'bg-green-50 text-green-700 border border-green-200'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}>
+                              {ast.tipo === 'entrada' ? 'ENTRADA' : 'SALIDA'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
