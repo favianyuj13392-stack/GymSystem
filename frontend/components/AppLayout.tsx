@@ -12,8 +12,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<'admin' | 'empleado'>('admin');
   const [userName, setUserName] = useState<string>('Cargando...');
   
-  // Excluir la barra lateral en el carnet digital y pantalla de login
-  const isPublicRoute = pathname?.startsWith('/socio/') || pathname === '/login';
+  // Excluir la barra lateral en el carnet digital, landing page y pantalla de login
+  const isPublicRoute = pathname?.startsWith('/socio/') || pathname === '/login' || pathname === '/';
 
   useEffect(() => {
     async function fetchUserRole() {
@@ -128,7 +128,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-            <span className="font-black text-xl text-white tracking-tight">GymControl</span>
+            <span className="font-black text-xl text-white tracking-tight">DarkoGym</span>
           </div>
         </div>
 
