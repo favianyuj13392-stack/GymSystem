@@ -31,6 +31,20 @@ export default function RecepcionControlPage() {
   const isProcessingRef = useRef(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const scannerRef = useRef<any>(null);
+  const timeoutIdRef = useRef<any>(null);
+
+  const resetScanState = () => {
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+    setStatus('idle');
+    setResultado(null);
+    isProcessingRef.current = false;
+    if (scannerRef.current && scannerRef.current.getState() === 2 /* PAUSED */) {
+      scannerRef.current.resume();
+    }
+  };
 
   // 1. Cargar Socios Activos Iniciales
   useEffect(() => {
@@ -124,15 +138,13 @@ export default function RecepcionControlPage() {
       });
     }
 
-    // Reactivar escáner después de 3 segundos para el siguiente socio
-    setTimeout(() => {
-      setStatus('idle');
-      setResultado(null);
-      isProcessingRef.current = false;
-      if (scannerRef.current && scannerRef.current.getState() === 2 /* PAUSED */) {
-        scannerRef.current.resume();
-      }
-    }, 4000);
+    // Reactivar escáner después de 10 segundos para el siguiente socio
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+    }
+    timeoutIdRef.current = setTimeout(() => {
+      resetScanState();
+    }, 10000);
   };
 
   // 4. Lógica para dar Salida a un Socio
@@ -179,6 +191,17 @@ export default function RecepcionControlPage() {
             <svg className="w-64 h-64" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 13l4 4L19 7" /></svg>
           </div>
           
+          {/* Botón de cerrar discreto */}
+          <button
+            onClick={resetScanState}
+            className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
+            title="Cerrar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
           <div className="z-10 flex flex-col items-center w-full">
             <div className="relative w-44 h-44 mb-6 rounded-full overflow-hidden border-8 border-white shadow-2xl bg-slate-200">
               {resultado?.socio?.foto_url ? (
@@ -213,6 +236,17 @@ export default function RecepcionControlPage() {
             <svg className="w-64 h-64" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M6 18L18 6M6 6l12 12" /></svg>
           </div>
 
+          {/* Botón de cerrar discreto */}
+          <button
+            onClick={resetScanState}
+            className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
+            title="Cerrar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
           <div className="z-10 flex flex-col items-center w-full">
             <div className="relative w-44 h-44 mb-6 rounded-full overflow-hidden border-8 border-white shadow-2xl bg-slate-200">
               {resultado?.socio?.foto_url ? (
@@ -238,7 +272,18 @@ export default function RecepcionControlPage() {
 
     if (status === 'no_registrado') {
       return (
-        <div className="flex flex-col items-center justify-center h-full bg-orange-500 text-white rounded-[2rem] shadow-2xl p-8 animate-in zoom-in duration-300">
+        <div className="flex flex-col items-center justify-center h-full bg-orange-500 text-white rounded-[2rem] shadow-2xl p-8 animate-in zoom-in duration-300 relative overflow-hidden">
+          {/* Botón de cerrar discreto */}
+          <button
+            onClick={resetScanState}
+            className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
+            title="Cerrar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
           <div className="bg-white text-orange-500 rounded-full p-6 mb-6 shadow-xl">
             <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
@@ -331,7 +376,7 @@ export default function RecepcionControlPage() {
       </div>
 
       {/* Columna Derecha: Socios en el Gym */}
-      <div className={`w-full lg:w-[420px] flex flex-col bg-white lg:rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 h-full lg:h-full ${activeTab === 'list' ? 'flex p-4 lg:p-0' : 'hidden lg:flex'}`}>
+      <div className={`w-full lg:w-[480px] flex flex-col bg-white lg:rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 h-full lg:h-full ${activeTab === 'list' ? 'flex p-4 lg:p-0' : 'hidden lg:flex'}`}>
         <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -355,22 +400,22 @@ export default function RecepcionControlPage() {
               {sociosActivos.map((socio) => (
                 <li 
                   key={socio.id} 
-                  className={`bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all ${
+                  className={`bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all ${
                     removingId === socio.id ? 'opacity-0 scale-95 duration-300 pointer-events-none' : 'opacity-100 scale-100 duration-300'
                   }`}
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="relative w-14 h-14 rounded-full overflow-hidden bg-slate-100 shrink-0 border-2 border-green-100">
+                  <div className="flex items-center gap-4 min-w-0 w-full">
+                    <div className="relative w-14 h-14 lg:w-20 lg:h-20 rounded-full overflow-hidden bg-slate-100 shrink-0 border-2 border-green-100">
                       {socio.foto_url ? (
-                        <Image loader={cloudinaryLoader} src={socio.foto_url} alt={socio.nombre} fill className="object-cover" sizes="56px" />
+                        <Image loader={cloudinaryLoader} src={socio.foto_url} alt={socio.nombre} fill className="object-cover" sizes="(max-width: 1024px) 56px, 80px" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400">
-                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                           <svg className="w-6 h-6 lg:w-10 lg:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         </div>
                       )}
                     </div>
-                    <div className="min-w-0 truncate">
-                      <p className="text-base font-bold text-slate-800 truncate">{socio.nombre}</p>
+                    <div className="min-w-0 truncate flex-1">
+                      <p className="text-base lg:text-lg font-bold text-slate-800 truncate">{socio.nombre}</p>
                       <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
                         <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         Entró a las {new Date(socio.horaEntrada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
