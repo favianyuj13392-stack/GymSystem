@@ -116,10 +116,7 @@ export default function RecepcionControlPage() {
     const response = await procesarAcceso(codigoQr.trim());
 
     setStatus(response.status as StatusType);
-    setResultado({
-      socio: 'socio' in response ? response.socio : null,
-      membresia: 'membresia' in response ? response.membresia : null,
-    });
+    setResultado(response);
 
     // Si es exitoso, añadirlo a la lista de activos
     if (response.status === 'concedido' && 'socio' in response) {
