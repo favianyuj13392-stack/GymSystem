@@ -5,21 +5,24 @@ import Link from 'next/link';
 import { cerrarSesion } from '@/app/login/actions';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/utils/supabase/client';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [role, setRole] = useState<'admin' | 'empleado'>('empleado');
   const [userName, setUserName] = useState<string>('Cargando...');
+  const [userEmail, setUserEmail] = useState<string>('');
   
   // Excluir la barra lateral en el carnet digital, landing page y pantalla de login
   const isPublicRoute = pathname?.startsWith('/socio/') || pathname === '/login' || pathname === '/';
 
   useEffect(() => {
+    const supabase = createClient();
     async function fetchUserRole() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          setUserEmail(user.email || '');
           // Default user name from metadata or email prefix
           const defaultName = user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario';
           setUserName(defaultName);
@@ -167,9 +170,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {userName.slice(0, 2).toUpperCase()}
               </span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-white truncate">{userName}</p>
-              <p className="text-xs text-slate-500 truncate">
+              <p className="text-[11px] text-slate-500 truncate">{userEmail || 'cargando...'}</p>
+              <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider mt-0.5">
                 {role === 'admin' ? 'Administrador' : 'Recepcionista'}
               </p>
             </div>

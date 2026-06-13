@@ -18,6 +18,15 @@ export default function RecepcionControlPage() {
   const [cameraError, setCameraError] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'scanner' | 'list'>('scanner');
+  const [isCameraActive, setIsCameraActive] = useState(false);
+
+  useEffect(() => {
+    // Activar automáticamente solo en celulares/tablets
+    const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth < 1024;
+    if (isMobileDevice) {
+      setIsCameraActive(true);
+    }
+  }, []);
 
   const isProcessingRef = useRef(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,6 +43,8 @@ export default function RecepcionControlPage() {
 
   // 2. Inicializar Escáner de Cámara (import dinámico para evitar errores SSR en Vercel)
   useEffect(() => {
+    if (!isCameraActive) return;
+
     let isMounted = true;
 
     const initScanner = async () => {
@@ -73,7 +84,7 @@ export default function RecepcionControlPage() {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isCameraActive]);
 
   // 3. Lógica de Procesamiento del Código QR
   const handleScan = async (codigoQr: string) => {
@@ -275,7 +286,26 @@ export default function RecepcionControlPage() {
         
         {/* Lector de QR de Video */}
         <div className={`bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 flex flex-col items-center justify-center relative min-h-[300px] ${status === 'idle' ? 'block' : 'hidden lg:block'}`}>
-          {cameraError ? (
+          {!isCameraActive ? (
+            <div className="p-8 text-center flex flex-col items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 border border-amber-500/20">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800">Cámara Inactiva</h3>
+              <p className="text-zinc-500 text-xs mt-1 max-w-xs leading-relaxed">
+                Por motivos de rendimiento y privacidad, la cámara está apagada. Hacé clic abajo para activarla e iniciar el escaneo de accesos.
+              </p>
+              <button
+                onClick={() => setIsCameraActive(true)}
+                className="mt-5 bg-amber-500 hover:bg-amber-600 text-black text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/10 active:scale-95"
+              >
+                Activar Cámara
+              </button>
+            </div>
+          ) : cameraError ? (
             <div className="p-8 text-center text-red-500">
               <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               <p className="font-bold">No se pudo acceder a la cámara</p>
