@@ -300,7 +300,7 @@ export default function RecepcionControlPage() {
             <div className="bg-red-900/40 backdrop-blur-md rounded-2xl p-6 border border-red-500/30 text-center w-full max-w-2xl">
               <p className="text-sm uppercase tracking-widest opacity-90 mb-2 font-semibold text-red-200">ACCESO RESTRINGIDO POR EL PLAN</p>
               <p className="text-2xl font-bold mb-1">Plan: {resultado?.membresia?.planes?.nombre || 'Membresía Activa'}</p>
-              <p className="text-xl opacity-90">Teléfono: {resultado?.socio?.telefono || 'No registrado'}</p>
+              <p className="text-xl font-bold text-amber-300 mt-2">Motivo: {resultado?.razon || 'Reglas de plan superadas'}</p>
             </div>
           </div>
         </div>
