@@ -56,9 +56,13 @@ async function procesarMembresia(socio: any) {
 
   const membresia = membresias[0];
 
-  // 3. Validar la fecha_fin contra la fecha actual
-  const hoyObj = new Date();
-  const hoyFormat = `${hoyObj.getFullYear()}-${String(hoyObj.getMonth()+1).padStart(2, '0')}-${String(hoyObj.getDate()).padStart(2, '0')}`;
+  // 3. Validar la fecha_fin contra la fecha actual (forzando zona horaria de Bolivia)
+  const hoyFormat = new Intl.DateTimeFormat('fr-CA', {
+    timeZone: 'America/La_Paz',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
 
   if (membresia.fecha_fin < hoyFormat || membresia.estado !== 'activo') {
     return { status: 'vencido', socio, membresia };
@@ -93,8 +97,9 @@ async function procesarMembresia(socio: any) {
 
     // 3b. Validar Restricción Horaria (Prioridad 2)
     if (plan.hora_inicio && plan.hora_fin) {
-      // Obtenemos hora actual del servidor en formato local HH:MM:SS de 24 horas
+      // Obtenemos hora actual en formato de 24 horas forzando la zona horaria de Bolivia
       const horaActual = new Date().toLocaleTimeString('es-BO', {
+        timeZone: 'America/La_Paz',
         hour12: false,
         hour: '2-digit',
         minute: '2-digit',
