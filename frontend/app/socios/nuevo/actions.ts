@@ -51,10 +51,10 @@ export async function crearSocio(datosSocio: {
       return { success: false, error: 'No se pudo crear el socio. Es probable que el DNI ya esté registrado.' };
     }
 
-    // 2. Obtener la duración del plan seleccionado (meses)
+    // 2. Obtener la duración del plan seleccionado (meses), el precio y el nombre
     const { data: plan, error: planError } = await supabaseServer
       .from('planes')
-      .select('duracion_meses')
+      .select('duracion_meses, precio, nombre')
       .eq('id', datosSocio.plan_id)
       .single();
 
@@ -78,7 +78,7 @@ export async function crearSocio(datosSocio: {
     };
 
     // 4. Insertar la membresía en estado activo
-    const { error: membresiaError } = await supabaseServer
+    const { data: nuevaMembresia, error: membresiaError } = await supabaseServer
       .from('membresias')
       .insert({
         socio_id: nuevoSocio.id,
@@ -86,11 +86,30 @@ export async function crearSocio(datosSocio: {
         fecha_inicio: formatISODate(fechaInicio),
         fecha_fin: formatISODate(fechaFin),
         estado: 'activo'
-      });
+      })
+      .select('id')
+      .single();
 
-    if (membresiaError) {
+    if (membresiaError || !nuevaMembresia) {
       console.error('Error insertando membresía:', membresiaError);
       return { success: false, error: 'Socio registrado, pero ocurrió un error al asignar la membresía.' };
+    }
+
+    // 5. Insertar el pago inicial del plan
+    const { error: pagoError } = await supabaseServer
+      .from('pagos')
+      .insert({
+        socio_id: nuevoSocio.id,
+        membresia_id: nuevaMembresia.id,
+        monto: plan.precio || 0,
+        metodo_pago: 'Efectivo',
+        concepto: `Inscripción - Plan ${plan.nombre || ''}`,
+        tipo: 'Plan',
+        fecha_pago: new Date().toISOString()
+      });
+
+    if (pagoError) {
+      console.error('Atención: El socio y la membresía se crearon pero el pago no se registró:', pagoError);
     }
 
     return { success: true, codigoQr, socioId: nuevoSocio.id };
