@@ -67,27 +67,7 @@ async function procesarMembresia(socio: any) {
   const plan = membresia.planes;
 
   if (plan) {
-    // 3a. Validar Restricción Horaria
-    if (plan.hora_inicio && plan.hora_fin) {
-      // Obtenemos hora actual del servidor en formato local HH:MM:SS de 24 horas
-      const horaActual = new Date().toLocaleTimeString('es-BO', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-
-      if (horaActual < plan.hora_inicio || horaActual > plan.hora_fin) {
-        return {
-          status: 'denegado',
-          socio,
-          membresia,
-          razon: `Fuera del horario permitido (${plan.hora_inicio.slice(0, 5)} a ${plan.hora_fin.slice(0, 5)})`
-        };
-      }
-    }
-
-    // 3b. Validar Límite de Accesos
+    // 3a. Validar Límite de Accesos (Prioridad 1)
     if (plan.limite_accesos !== null && plan.limite_accesos !== undefined) {
       const { count, error: countError } = await supabaseServer
         .from('asistencias')
@@ -105,9 +85,29 @@ async function procesarMembresia(socio: any) {
             status: 'denegado',
             socio,
             membresia,
-            razon: `Límite de accesos superado (${accesosRealizados}/${plan.limite_accesos})`
+            razon: `Máximo de entradas superadas (Max ${plan.limite_accesos})`
           };
         }
+      }
+    }
+
+    // 3b. Validar Restricción Horaria (Prioridad 2)
+    if (plan.hora_inicio && plan.hora_fin) {
+      // Obtenemos hora actual del servidor en formato local HH:MM:SS de 24 horas
+      const horaActual = new Date().toLocaleTimeString('es-BO', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      if (horaActual < plan.hora_inicio || horaActual > plan.hora_fin) {
+        return {
+          status: 'denegado',
+          socio,
+          membresia,
+          razon: `Fuera de horario (${plan.hora_inicio.slice(0, 5)} - ${plan.hora_fin.slice(0, 5)})`
+        };
       }
     }
   }
