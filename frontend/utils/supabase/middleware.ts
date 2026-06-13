@@ -64,8 +64,8 @@ export async function updateSession(request: NextRequest) {
           .eq('id', user.id)
           .single()
         
-        // Safe fallback to 'admin' if table/record is not found to prevent lockout/crashes
-        const role = empleado?.rol || 'admin'
+        // Safe fallback to 'empleado' if table/record is not found to prevent unauthorized bypass
+        const role = empleado?.rol || 'empleado'
         
         if (role === 'empleado') {
           const url = request.nextUrl.clone()
@@ -73,7 +73,10 @@ export async function updateSession(request: NextRequest) {
           return NextResponse.redirect(url)
         }
       } catch (err) {
-        console.error('Error in middleware role check, falling back to admin:', err)
+        console.error('Error in middleware role check, falling back to empleado:', err)
+        const url = request.nextUrl.clone()
+        url.pathname = '/admin/socios'
+        return NextResponse.redirect(url)
       }
     }
   }

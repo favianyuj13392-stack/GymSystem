@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [role, setRole] = useState<'admin' | 'empleado'>('admin');
+  const [role, setRole] = useState<'admin' | 'empleado'>('empleado');
   const [userName, setUserName] = useState<string>('Cargando...');
   
   // Excluir la barra lateral en el carnet digital, landing page y pantalla de login
@@ -40,12 +40,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             }
           } else {
             // Safe fallback if not found
-            setRole('admin');
+            setRole('empleado');
           }
         }
       } catch (err) {
-        console.error('Error fetching user role:', err);
-        setRole('admin'); // fallback to admin to avoid blocking layout
+        console.error('Error fetching user role, falling back to empleado:', err);
+        setRole('empleado'); // fallback to empleado
       }
     }
     

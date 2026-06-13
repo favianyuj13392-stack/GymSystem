@@ -14,12 +14,26 @@ ALTER TABLE empleados ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow authenticated users to read roles" 
 ON empleados FOR SELECT TO authenticated USING (true);
 
--- Política para permitir a los administradores tener acceso completo a la tabla
-CREATE POLICY "Allow admins full access to empleados" 
-ON empleados FOR ALL TO authenticated USING (
-  EXISTS (
-    SELECT 1 FROM empleados WHERE id = auth.uid() AND rol = 'admin'
-  )
+-- Política para permitir a los administradores tener acceso a operaciones de escritura de forma segura (sin recursión en SELECT)
+CREATE POLICY "Allow admins to insert empleados" 
+ON empleados FOR INSERT TO authenticated 
+WITH CHECK (
+  (SELECT rol FROM empleados WHERE id = auth.uid()) = 'admin'
+);
+
+CREATE POLICY "Allow admins to update empleados" 
+ON empleados FOR UPDATE TO authenticated 
+USING (
+  (SELECT rol FROM empleados WHERE id = auth.uid()) = 'admin'
+)
+WITH CHECK (
+  (SELECT rol FROM empleados WHERE id = auth.uid()) = 'admin'
+);
+
+CREATE POLICY "Allow admins to delete empleados" 
+ON empleados FOR DELETE TO authenticated 
+USING (
+  (SELECT rol FROM empleados WHERE id = auth.uid()) = 'admin'
 );
 
 -- Agregar columna 'metodo_pago' a la tabla 'pagos' para soportar el desglose de métodos de pago
