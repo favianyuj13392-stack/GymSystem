@@ -229,8 +229,8 @@ export default function AdminSociosPage() {
 
   const handleRenovarSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!planSeleccionado || !montoPago) {
-      setErrorRenovacion('Por favor selecciona un plan e ingresa el monto pagado.');
+    if (!planSeleccionado) {
+      setErrorRenovacion('Por favor selecciona un plan.');
       return;
     }
 
@@ -484,37 +484,24 @@ export default function AdminSociosPage() {
                     required
                     value={planSeleccionado}
                     onChange={(e) => setPlanSeleccionado(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white cursor-pointer"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white cursor-pointer text-slate-900 font-medium"
                     disabled={renovando || planes.length === 0}
                   >
-                    <option value="" disabled>Selecciona un plan</option>
+                    <option value="" disabled className="text-slate-900 bg-white">Selecciona un plan</option>
                     {planes.map(plan => (
-                      <option key={plan.id} value={plan.id}>
+                      <option key={plan.id} value={plan.id} className="text-slate-900 bg-white">
                         {plan.nombre} - Bs. {plan.precio} ({plan.duracion_meses} meses)
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Monto Pagado (Bs.)</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-slate-500 font-medium">Bs.</span>
-                    </div>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      step="0.1"
-                      value={montoPago}
-                      onChange={(e) => setMontoPago(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white font-medium"
-                      placeholder="0.00"
-                      disabled={renovando}
-                    />
+                {planSeleccionado && (
+                  <div className="bg-amber-50/60 border border-amber-200/50 p-4 rounded-xl flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700">Monto del Plan:</span>
+                    <span className="text-lg font-black text-amber-600">Bs. {montoPago}</span>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Método de Pago</label>
@@ -522,11 +509,11 @@ export default function AdminSociosPage() {
                     required
                     value={metodoPago}
                     onChange={(e) => setMetodoPago(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white cursor-pointer font-medium"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-white cursor-pointer font-medium text-slate-900"
                     disabled={renovando}
                   >
-                    <option value="Efectivo">Efectivo</option>
-                    <option value="Transferencia">Transferencia Bancaria</option>
+                    <option value="Efectivo" className="text-slate-900 bg-white">Efectivo</option>
+                    <option value="Transferencia" className="text-slate-900 bg-white">Transferencia Bancaria</option>
                   </select>
                 </div>
               </div>

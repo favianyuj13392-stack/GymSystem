@@ -15,6 +15,7 @@ export async function obtenerHistorialPagos(filtros?: {
         *,
         socios (
           nombre,
+          apellido,
           dni,
           telefono
         )

@@ -319,9 +319,9 @@ export default function NuevoSocioPage() {
                       className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all bg-slate-50 focus:bg-white appearance-none cursor-pointer text-slate-900"
                       disabled={status === 'uploading' || status === 'saving'}
                     >
-                      <option value="" disabled>Seleccione un plan</option>
+                      <option value="" disabled className="text-slate-900 bg-white">Seleccione un plan</option>
                       {planes.map(plan => (
-                        <option key={plan.id} value={plan.id}>
+                        <option key={plan.id} value={plan.id} className="text-slate-900 bg-white">
                           {plan.nombre} - Bs. {plan.precio} ({plan.duracion_meses} {plan.duracion_meses === 1 ? 'mes' : 'meses'})
                         </option>
                       ))}
