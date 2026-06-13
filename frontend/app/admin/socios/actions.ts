@@ -21,7 +21,7 @@ export async function obtenerListaSocios(busqueda?: string, filtroEstado?: strin
     `).eq('activo', true);
 
     if (busqueda) {
-      query = query.or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`);
+      query = query.or(`nombre.ilike.%${busqueda}%,apellido.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`);
     }
 
     const { data: sociosDB, error } = await query;
@@ -68,7 +68,11 @@ export async function obtenerListaSocios(busqueda?: string, filtroEstado?: strin
     }
 
     // Ordenar por nombre alfabéticamente por defecto
-    filtrados.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    filtrados.sort((a, b) => {
+      const nameA = `${a.nombre} ${a.apellido || ''}`.trim();
+      const nameB = `${b.nombre} ${b.apellido || ''}`.trim();
+      return nameA.localeCompare(nameB);
+    });
 
     return filtrados;
 
@@ -163,6 +167,9 @@ export async function renovarMembresia(socioId: string, planId: string, montoPag
 
 export async function actualizarSocio(id: string, datosSocio: {
   nombre: string;
+  apellido: string;
+  email: string;
+  fecha_nacimiento: string;
   dni: string;
   telefono: string;
   foto_url?: string;
@@ -170,6 +177,9 @@ export async function actualizarSocio(id: string, datosSocio: {
   try {
     const updateData: any = {
       nombre: datosSocio.nombre,
+      apellido: datosSocio.apellido,
+      email: datosSocio.email,
+      fecha_nacimiento: datosSocio.fecha_nacimiento || null,
       dni: datosSocio.dni,
       telefono: datosSocio.telefono,
     };

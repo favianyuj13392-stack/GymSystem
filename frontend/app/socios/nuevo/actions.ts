@@ -17,6 +17,9 @@ export async function obtenerPlanes() {
 
 export async function crearSocio(datosSocio: {
   nombre: string;
+  apellido: string;
+  email: string;
+  fecha_nacimiento: string;
   dni: string;
   telefono: string;
   foto_url: string;
@@ -32,6 +35,9 @@ export async function crearSocio(datosSocio: {
       .from('socios')
       .insert({
         nombre: datosSocio.nombre,
+        apellido: datosSocio.apellido,
+        email: datosSocio.email,
+        fecha_nacimiento: datosSocio.fecha_nacimiento,
         dni: datosSocio.dni,
         telefono: datosSocio.telefono,
         foto_url: datosSocio.foto_url,

@@ -15,7 +15,7 @@ export async function obtenerResumenMetricas() {
       .gte('fecha_fin', hoyFormat);
 
     // 2. Ingresos del Mes
-    const startOfMonth = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), 1).toISOString();
+    const startOfMonth = new Date(Date.UTC(hoyObj.getUTCFullYear(), hoyObj.getUTCMonth(), 1, 0, 0, 0, 0)).toISOString();
     const { data: pagos, error: errPagos } = await supabaseServer
       .from('pagos')
       .select('monto')

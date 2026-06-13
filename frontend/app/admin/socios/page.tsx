@@ -32,6 +32,9 @@ export default function AdminSociosPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [socioAEditar, setSocioAEditar] = useState<any>(null);
   const [editNombre, setEditNombre] = useState('');
+  const [editApellido, setEditApellido] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editFechaNacimiento, setEditFechaNacimiento] = useState('');
   const [editDni, setEditDni] = useState('');
   const [editTelefono, setEditTelefono] = useState('');
   const [editFotoFile, setEditFotoFile] = useState<File | null>(null);
@@ -114,6 +117,9 @@ export default function AdminSociosPage() {
   const abrirModalEdicion = (socio: any) => {
     setSocioAEditar(socio);
     setEditNombre(socio.nombre || '');
+    setEditApellido(socio.apellido || '');
+    setEditEmail(socio.email || '');
+    setEditFechaNacimiento(socio.fecha_nacimiento || '');
     setEditDni(socio.dni || '');
     setEditTelefono(socio.telefono || '');
     setEditFotoFile(null);
@@ -147,10 +153,10 @@ export default function AdminSociosPage() {
     }
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
+    const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editNombre.trim() || !editDni.trim()) {
-      setEditError('Por favor completa los campos obligatorios (Nombre y DNI).');
+    if (!editNombre.trim() || !editApellido.trim() || !editDni.trim()) {
+      setEditError('Por favor completa los campos obligatorios (Nombre, Apellido y DNI).');
       return;
     }
 
@@ -188,6 +194,9 @@ export default function AdminSociosPage() {
       setEditStatus('saving');
       const res = await actualizarSocio(socioAEditar.id, {
         nombre: editNombre,
+        apellido: editApellido,
+        email: editEmail,
+        fecha_nacimiento: editFechaNacimiento,
         dni: editDni,
         telefono: editTelefono,
         foto_url: uploadedFotoUrl
@@ -342,7 +351,7 @@ export default function AdminSociosPage() {
                               <Image 
                                 loader={cloudinaryLoader}
                                 src={socio.foto_url} 
-                                alt={socio.nombre} 
+                                alt={`${socio.nombre} ${socio.apellido || ''}`} 
                                 fill 
                                 className="object-cover"
                                 sizes="48px"
@@ -354,7 +363,7 @@ export default function AdminSociosPage() {
                             )}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-800">{socio.nombre}</p>
+                            <p className="font-bold text-slate-800">{socio.nombre} {socio.apellido || ''}</p>
                             <p className="text-xs text-slate-500 font-mono mt-0.5">ID: {socio.codigo_qr}</p>
                           </div>
                         </div>
@@ -457,7 +466,7 @@ export default function AdminSociosPage() {
                   )}
                 </div>
                 <div>
-                  <p className="font-bold text-slate-800 leading-tight">{socioARenovar.nombre}</p>
+                  <p className="font-bold text-slate-800 leading-tight">{socioARenovar.nombre} {socioARenovar.apellido || ''}</p>
                   <p className="text-xs text-slate-500 font-medium">{socioARenovar.dni}</p>
                 </div>
               </div>
@@ -572,17 +581,54 @@ export default function AdminSociosPage() {
               )}
 
               <div className="space-y-4">
-                {/* Nombre */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editNombre}
-                    onChange={(e) => setEditNombre(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
-                    disabled={editStatus === 'uploading' || editStatus === 'saving'}
-                  />
+                {/* Nombre y Apellido */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nombre *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editNombre}
+                      onChange={(e) => setEditNombre(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
+                      disabled={editStatus === 'uploading' || editStatus === 'saving'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Apellido *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editApellido}
+                      onChange={(e) => setEditApellido(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
+                      disabled={editStatus === 'uploading' || editStatus === 'saving'}
+                    />
+                  </div>
+                </div>
+
+                {/* Email y Fecha de Nacimiento */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
+                      disabled={editStatus === 'uploading' || editStatus === 'saving'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Nacimiento</label>
+                    <input
+                      type="date"
+                      value={editFechaNacimiento}
+                      onChange={(e) => setEditFechaNacimiento(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none bg-slate-50 focus:bg-white text-slate-900"
+                      disabled={editStatus === 'uploading' || editStatus === 'saving'}
+                    />
+                  </div>
                 </div>
 
                 {/* DNI & Teléfono */}
@@ -704,7 +750,7 @@ export default function AdminSociosPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">Dar de baja socio</h3>
               <p className="text-sm text-slate-500 mb-6">
-                ¿Estás seguro de que deseas dar de baja a <strong>{socioAEliminar.nombre}</strong>? El socio no podrá ingresar al gimnasio y sus datos quedarán inactivos.
+                ¿Estás seguro de que deseas dar de baja a <strong>{socioAEliminar.nombre} {socioAEliminar.apellido || ''}</strong>? El socio no podrá ingresar al gimnasio y sus datos quedarán inactivos.
               </p>
             </div>
 
@@ -744,7 +790,7 @@ export default function AdminSociosPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-xl font-bold text-slate-800">Historial de Asistencia</h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">{socioAsistencias.nombre}</p>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">{socioAsistencias.nombre} {socioAsistencias.apellido || ''}</p>
                 </div>
                 <button onClick={cerrarModalAsistencias} className="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 shadow-sm cursor-pointer">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

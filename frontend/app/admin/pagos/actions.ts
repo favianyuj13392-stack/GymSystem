@@ -75,7 +75,8 @@ export async function obtenerHistorialPagos(filtros?: {
 export async function obtenerSumaIngresosMes() {
   try {
     const hoyObj = new Date();
-    const startOfMonth = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), 1).toISOString();
+    // Definimos el inicio del mes en UTC para evitar truncamientos por zona horaria
+    const startOfMonth = new Date(Date.UTC(hoyObj.getUTCFullYear(), hoyObj.getUTCMonth(), 1, 0, 0, 0, 0)).toISOString();
 
     const { data, error } = await supabaseServer
       .from('pagos')
@@ -94,3 +95,38 @@ export async function obtenerSumaIngresosMes() {
     return 0;
   }
 }
+
+export async function registrarPagoManual(datosPago: {
+  socio_id: string | null;
+  concepto: string;
+  monto: number;
+  metodo_pago: string;
+  tipo: 'Producto' | 'Otros';
+}) {
+  try {
+    const { data: { user } } = await supabaseServer.auth.getUser();
+
+    const { data, error } = await supabaseServer
+      .from('pagos')
+      .insert({
+        socio_id: datosPago.socio_id || null,
+        concepto: datosPago.concepto,
+        monto: datosPago.monto,
+        metodo_pago: datosPago.metodo_pago,
+        tipo: datosPago.tipo,
+        fecha_pago: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al registrar pago manual:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error interno en registrarPagoManual:', error);
+    return { success: false, error: error.message };
+  }
+}
+

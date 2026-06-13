@@ -42,10 +42,10 @@ export async function procesarAcceso(codigoQr: string) {
 }
 
 async function procesarMembresia(socio: any) {
-  // 2. Buscar su membresía más reciente
+  // 2. Buscar su membresía más reciente junto con la info completa del plan
   const { data: membresias, error: membresiaError } = await supabaseServer
     .from('membresias')
-    .select('*, planes(nombre)')
+    .select('*, planes(*)')
     .eq('socio_id', socio.id)
     .order('fecha_fin', { ascending: false })
     .limit(1);
@@ -64,7 +64,55 @@ async function procesarMembresia(socio: any) {
     return { status: 'vencido', socio, membresia };
   }
 
-  // 4. Si está vigente, registrar la entrada
+  const plan = membresia.planes;
+
+  if (plan) {
+    // 3a. Validar Restricción Horaria
+    if (plan.hora_inicio && plan.hora_fin) {
+      // Obtenemos hora actual del servidor en formato local HH:MM:SS de 24 horas
+      const horaActual = new Date().toLocaleTimeString('es-BO', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      if (horaActual < plan.hora_inicio || horaActual > plan.hora_fin) {
+        return {
+          status: 'denegado',
+          socio,
+          membresia,
+          razon: `Fuera del horario permitido (${plan.hora_inicio.slice(0, 5)} a ${plan.hora_fin.slice(0, 5)})`
+        };
+      }
+    }
+
+    // 3b. Validar Límite de Accesos
+    if (plan.limite_accesos !== null && plan.limite_accesos !== undefined) {
+      const { count, error: countError } = await supabaseServer
+        .from('asistencias')
+        .select('id', { count: 'exact', head: true })
+        .eq('socio_id', socio.id)
+        .eq('tipo', 'entrada')
+        .gte('registrado_at', `${membresia.fecha_inicio}T00:00:00.000Z`);
+
+      if (countError) {
+        console.error('Error contando asistencias:', countError);
+      } else {
+        const accesosRealizados = count || 0;
+        if (accesosRealizados >= plan.limite_accesos) {
+          return {
+            status: 'denegado',
+            socio,
+            membresia,
+            razon: `Límite de accesos superado (${accesosRealizados}/${plan.limite_accesos})`
+          };
+        }
+      }
+    }
+  }
+
+  // 4. Si está vigente y cumple reglas, registrar la entrada
   const { error: insertError } = await supabaseServer
     .from('asistencias')
     .insert({
@@ -88,7 +136,7 @@ export async function obtenerSociosActivosEnGym() {
     // Obtenemos todas las asistencias de hoy junto a la info del socio
     const { data: asistencias, error } = await supabaseServer
       .from('asistencias')
-      .select('*, socios(id, nombre, foto_url, dni)')
+      .select('*, socios(id, nombre, apellido, foto_url, dni)')
       .gte('registrado_at', startOfDay)
       .order('registrado_at', { ascending: false });
 
@@ -111,7 +159,7 @@ export async function obtenerSociosActivosEnGym() {
       .filter(ast => ast.tipo === 'entrada')
       .map(ast => ({
         id: ast.socios.id,
-        nombre: ast.socios.nombre,
+        nombre: `${ast.socios.nombre} ${ast.socios.apellido || ''}`.trim(),
         foto_url: ast.socios.foto_url,
         dni: ast.socios.dni,
         horaEntrada: ast.registrado_at

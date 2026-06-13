@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { procesarAcceso, obtenerSociosActivosEnGym, registrarSalida } from './actions';
 
-type StatusType = 'idle' | 'loading' | 'concedido' | 'vencido' | 'no_registrado' | 'error';
+type StatusType = 'idle' | 'loading' | 'concedido' | 'vencido' | 'no_registrado' | 'error' | 'denegado';
 
 // Loader inline de Cloudinary para next/image
 const cloudinaryLoader = ({ src, width, quality }: { src: string, width: number, quality?: number }) => {
@@ -125,7 +125,7 @@ export default function RecepcionControlPage() {
     if (response.status === 'concedido' && 'socio' in response) {
       const nuevoActivo = {
         id: response.socio.id,
-        nombre: response.socio.nombre,
+        nombre: `${response.socio.nombre} ${response.socio.apellido || ''}`.trim(),
         foto_url: response.socio.foto_url,
         dni: response.socio.dni,
         horaEntrada: new Date().toISOString()
@@ -212,7 +212,7 @@ export default function RecepcionControlPage() {
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black mb-2 tracking-tight drop-shadow-md text-center">¡ACCESO CONCEDIDO!</h1>
-            <h2 className="text-4xl font-bold mb-6 drop-shadow-sm">{resultado?.socio?.nombre}</h2>
+            <h2 className="text-4xl font-bold mb-6 drop-shadow-sm">{resultado?.socio?.nombre} {resultado?.socio?.apellido || ''}</h2>
             
             <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 w-full max-w-2xl">
               <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 text-center min-w-0">
@@ -258,12 +258,49 @@ export default function RecepcionControlPage() {
 
             <h1 className="text-5xl lg:text-7xl font-black mb-2 tracking-tight drop-shadow-md text-center">ACCESO DENEGADO</h1>
             <h2 className="text-3xl font-bold mb-4 drop-shadow-sm text-red-200">MEMBRESÍA VENCIDA</h2>
-            <h3 className="text-4xl font-bold mb-6 drop-shadow-sm">{resultado?.socio?.nombre}</h3>
+            <h3 className="text-4xl font-bold mb-6 drop-shadow-sm">{resultado?.socio?.nombre} {resultado?.socio?.apellido || ''}</h3>
             
             <div className="bg-red-900/40 backdrop-blur-md rounded-2xl p-6 border border-red-500/30 text-center w-full max-w-2xl">
               <p className="text-sm uppercase tracking-widest opacity-90 mb-2 font-semibold text-red-200">Por favor, regularice su situación</p>
               <p className="text-2xl font-bold mb-1">Teléfono: {resultado?.socio?.telefono || 'No registrado'}</p>
               <p className="text-xl opacity-90">Venció el: {resultado?.membresia?.fecha_fin || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (status === 'denegado') {
+      return (
+        <div className="flex flex-col items-center justify-center h-full bg-red-600 text-white rounded-[2rem] shadow-2xl p-8 animate-in zoom-in duration-300 relative overflow-hidden">
+          {/* Botón de cerrar discreto */}
+          <button
+            onClick={resetScanState}
+            className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
+            title="Cerrar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div className="z-10 flex flex-col items-center w-full">
+            <div className="relative w-44 h-44 mb-6 rounded-full overflow-hidden border-8 border-white shadow-2xl bg-slate-200">
+              {resultado?.socio?.foto_url ? (
+                <Image loader={cloudinaryLoader} src={resultado.socio.foto_url} alt="Foto Socio" fill className="object-cover" sizes="176px" priority />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-300 text-slate-500"><svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+              )}
+            </div>
+
+            <h1 className="text-5xl lg:text-7xl font-black mb-2 tracking-tight drop-shadow-md text-center">ACCESO DENEGADO</h1>
+            <h2 className="text-3xl font-bold mb-4 drop-shadow-sm text-red-200 uppercase">{resultado?.razon || 'REGLAS DE PLAN SUPERADAS'}</h2>
+            <h3 className="text-4xl font-bold mb-6 drop-shadow-sm">{resultado?.socio?.nombre} {resultado?.socio?.apellido || ''}</h3>
+            
+            <div className="bg-red-900/40 backdrop-blur-md rounded-2xl p-6 border border-red-500/30 text-center w-full max-w-2xl">
+              <p className="text-sm uppercase tracking-widest opacity-90 mb-2 font-semibold text-red-200">ACCESO RESTRINGIDO POR EL PLAN</p>
+              <p className="text-2xl font-bold mb-1">Plan: {resultado?.membresia?.planes?.nombre || 'Membresía Activa'}</p>
+              <p className="text-xl opacity-90">Teléfono: {resultado?.socio?.telefono || 'No registrado'}</p>
             </div>
           </div>
         </div>

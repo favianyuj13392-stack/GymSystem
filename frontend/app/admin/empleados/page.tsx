@@ -10,6 +10,7 @@ export default function EmpleadosPage() {
   // Modal de Creación
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
   const [rol, setRol] = useState<'admin' | 'empleado'>('empleado');
   const [contrasena, setContrasena] = useState('');
@@ -34,6 +35,7 @@ export default function EmpleadosPage() {
 
   const abrirModalCrear = () => {
     setNombre('');
+    setApellido('');
     setEmail('');
     setRol('empleado');
     setContrasena('');
@@ -47,7 +49,7 @@ export default function EmpleadosPage() {
 
   const handleCrearSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim() || !email.trim() || !contrasena.trim()) {
+    if (!nombre.trim() || !apellido.trim() || !email.trim() || !contrasena.trim()) {
       setErrorCreacion('Por favor completa todos los campos.');
       return;
     }
@@ -59,7 +61,7 @@ export default function EmpleadosPage() {
     setCreando(true);
     setErrorCreacion('');
 
-    const res = await crearEmpleado(nombre, email, rol, contrasena);
+    const res = await crearEmpleado(nombre, apellido, email, rol, contrasena);
     setCreando(false);
 
     if (res.success) {
@@ -156,7 +158,7 @@ export default function EmpleadosPage() {
                     return (
                       <tr key={emp.id} className="hover:bg-zinc-850/30 transition-colors">
                         <td className="px-6 py-4 font-bold text-white text-sm">
-                          {emp.nombre}
+                          {emp.nombre} {emp.apellido || ''}
                         </td>
                         <td className="px-6 py-4 text-zinc-400 text-sm font-mono">
                           {emp.email}
@@ -213,18 +215,32 @@ export default function EmpleadosPage() {
                 </div>
               )}
 
-              {/* Nombre */}
-              <div>
-                <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase">Nombre Completo</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ej. Juan Pérez"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
-                  disabled={creando}
-                />
+              {/* Nombre y Apellido */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase">Nombre</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ej. Juan"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors bg-transparent"
+                    disabled={creando}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase">Apellido</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ej. Pérez"
+                    value={apellido}
+                    onChange={(e) => setApellido(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors bg-transparent"
+                    disabled={creando}
+                  />
+                </div>
               </div>
 
               {/* Email */}

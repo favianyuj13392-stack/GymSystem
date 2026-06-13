@@ -6,7 +6,7 @@ export async function obtenerResumenDashboard() {
   try {
     const hoyObj = new Date();
     const hoyFormat = `${hoyObj.getFullYear()}-${String(hoyObj.getMonth() + 1).padStart(2, '0')}-${String(hoyObj.getDate()).padStart(2, '0')}`;
-    const startOfMonth = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), 1).toISOString();
+    const startOfMonth = new Date(Date.UTC(hoyObj.getUTCFullYear(), hoyObj.getUTCMonth(), 1, 0, 0, 0, 0)).toISOString();
 
     // 1. Total Socios (activos en el sistema)
     const { count: totalSocios, error: errTotal } = await supabaseServer

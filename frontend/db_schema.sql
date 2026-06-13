@@ -77,3 +77,35 @@ ON socios (lower(nombre));
 -- Se recomienda revisar que todas las Foreign Keys tengan 'ON DELETE CASCADE' o 'SET NULL'
 -- para evitar bloqueos transaccionales huérfanos al borrar registros.
 
+-- =========================================================================
+-- MIGRACIÓN DE CAMPOS: EMAIL, FECHA DE NACIMIENTO Y SEPARACIÓN DE APELLIDO
+-- =========================================================================
+-- Ejecutar en el SQL Editor para añadir los nuevos campos necesarios:
+
+-- Modificaciones en la tabla 'socios'
+ALTER TABLE socios ADD COLUMN IF NOT EXISTS apellido TEXT;
+ALTER TABLE socios ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE socios ADD COLUMN IF NOT EXISTS fecha_nacimiento DATE;
+
+-- Modificaciones en la tabla 'empleados'
+ALTER TABLE empleados ADD COLUMN IF NOT EXISTS apellido TEXT;
+
+-- =========================================================================
+-- CRUD DE PLANES, CLASIFICACIÓN DE PAGOS Y CONTROL DE ACCESOS
+-- =========================================================================
+
+-- Enriquecer la tabla de planes
+ALTER TABLE planes ADD COLUMN IF NOT EXISTS descripcion TEXT;
+ALTER TABLE planes ADD COLUMN IF NOT EXISTS duracion_dias INTEGER DEFAULT 30;
+ALTER TABLE planes ADD COLUMN IF NOT EXISTS limite_accesos INTEGER; -- NULL = ilimitado
+ALTER TABLE planes ADD COLUMN IF NOT EXISTS hora_inicio TIME; -- NULL = sin restricción
+ALTER TABLE planes ADD COLUMN IF NOT EXISTS hora_fin TIME; -- NULL = sin restricción
+ALTER TABLE planes ADD COLUMN IF NOT EXISTS servicios_extras JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE planes ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+
+-- Enriquecer y flexibilizar la tabla de pagos
+ALTER TABLE pagos ALTER COLUMN socio_id DROP NOT NULL;
+ALTER TABLE pagos ADD COLUMN IF NOT EXISTS tipo TEXT CHECK (tipo IN ('Plan', 'Producto', 'Otros')) DEFAULT 'Plan';
+ALTER TABLE pagos ADD COLUMN IF NOT EXISTS concepto TEXT DEFAULT 'Membresía';
+ALTER TABLE pagos ALTER COLUMN fecha_pago SET DEFAULT NOW();
+

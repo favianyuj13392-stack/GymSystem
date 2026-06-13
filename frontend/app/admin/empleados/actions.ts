@@ -20,7 +20,7 @@ export async function obtenerEmpleados() {
   }
 }
 
-export async function crearEmpleado(nombre: string, email: string, rol: 'admin' | 'empleado', contrasena: string) {
+export async function crearEmpleado(nombre: string, apellido: string, email: string, rol: 'admin' | 'empleado', contrasena: string) {
   try {
     // 1. Crear el usuario en la sección de autenticación de Supabase (con el rol de administrador del servidor)
     const { data: authData, error: authError } = await supabaseServer.auth.admin.createUser({
@@ -40,6 +40,7 @@ export async function crearEmpleado(nombre: string, email: string, rol: 'admin' 
       .insert({
         id: authData.user.id,
         nombre,
+        apellido,
         email,
         rol
       });
