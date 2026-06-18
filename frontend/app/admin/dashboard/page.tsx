@@ -74,25 +74,27 @@ export default function AdminDashboardPage() {
   };
 
   const getCellColorClass = (occupancy: number) => {
-    if (occupancy === 0) return 'bg-zinc-950/40 border border-zinc-900/30 text-zinc-650';
+    if (occupancy === 0) {
+      return 'bg-zinc-950/50 border border-zinc-900/40 text-zinc-700 hover:bg-zinc-900/40 hover:border-zinc-800/60';
+    }
     if (occupancy >= 86) {
-      return 'bg-red-500/20 border border-red-500/20 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.15)]';
+      return 'bg-gradient-to-br from-red-600/25 to-red-950/10 border border-red-500/40 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.2)] animate-[pulse_2.5s_cubic-bezier(0.4,0,0.6,1)_infinite] hover:border-red-400 hover:shadow-[0_0_12px_rgba(239,68,68,0.4)]';
     } else if (occupancy >= 66) {
-      return 'bg-amber-500/20 border border-amber-500/20 text-amber-300';
+      return 'bg-gradient-to-br from-amber-500/20 to-amber-950/10 border border-amber-500/40 text-amber-300 hover:border-amber-400 hover:shadow-[0_0_10px_rgba(245,158,11,0.25)]';
     } else if (occupancy >= 41) {
-      return 'bg-emerald-500/20 border border-emerald-500/20 text-emerald-300';
+      return 'bg-gradient-to-br from-emerald-500/20 to-emerald-950/5 border border-emerald-500/40 text-emerald-300 hover:border-emerald-400 hover:shadow-[0_0_10px_rgba(16,185,129,0.25)]';
     } else if (occupancy >= 16) {
-      return 'bg-emerald-900/30 border border-emerald-900/20 text-emerald-400';
+      return 'bg-gradient-to-br from-emerald-600/15 to-emerald-950/5 border border-emerald-600/30 text-emerald-400 hover:border-emerald-500/50';
     } else {
-      return 'bg-emerald-950/15 border border-emerald-950/10 text-emerald-500';
+      return 'bg-gradient-to-br from-emerald-950/20 to-emerald-950/5 border border-emerald-950/40 text-emerald-500 hover:border-emerald-800/40';
     }
   };
 
   const getOcupacionLabel = (occupancy: number) => {
     if (occupancy === 0) return 'Vacío';
-    if (occupancy >= 86) return 'Saturación Crítica (Pico)';
-    if (occupancy >= 66) return 'Concurrencia Moderada/Alta';
-    if (occupancy >= 41) return 'Concurrencia Saludable';
+    if (occupancy >= 86) return 'Saturación Crítica';
+    if (occupancy >= 66) return 'Concurrencia Alta';
+    if (occupancy >= 41) return 'Concurrencia Media';
     return 'Baja Afluencia';
   };
 
@@ -107,12 +109,12 @@ export default function AdminDashboardPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
               Panel de Control Principal
             </div>
-            <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight">Dashboard General</h1>
+            <h1 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent tracking-tight">Dashboard General</h1>
             <p className="text-zinc-400 mt-1">Análisis predictivo de concurrencia y aforo en tiempo real.</p>
           </div>
 
           {/* Selector de Filtros Temporales */}
-          <div className="flex bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-800 backdrop-blur-md">
+          <div className="flex bg-zinc-950/65 p-1.5 rounded-2xl border border-zinc-900 backdrop-blur-xl">
             {[
               { id: 'mensual', label: 'Mensual' },
               { id: 'trimestral', label: 'Trimestral' },
@@ -122,10 +124,10 @@ export default function AdminDashboardPage() {
               <button
                 key={f.id}
                 onClick={() => setRango(f.id as any)}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 ${
+                className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all duration-300 ${
                   rango === f.id
-                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/10'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-lg shadow-amber-500/20'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'
                 }`}
               >
                 {f.label}
@@ -137,74 +139,74 @@ export default function AdminDashboardPage() {
         {/* 1. KPIs (Tarjetas Superiores) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Socios Activos */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-amber-900/40 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-zinc-950/20 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-amber-900/40 transition-all duration-300 group">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Socios Activos</span>
-              <div className="w-10 h-10 rounded-xl bg-amber-950/50 text-amber-400 border border-amber-900/30 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Socios Activos</span>
+              <div className="w-10 h-10 rounded-xl bg-amber-950/50 text-amber-400 border border-amber-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               </div>
             </div>
             <div>
               {loading ? (
-                <div className="h-9 w-20 bg-zinc-800 rounded animate-pulse"></div>
+                <div className="h-9 w-20 bg-zinc-850 rounded animate-pulse"></div>
               ) : (
                 <p className="text-3xl font-black text-white tracking-tight">{data?.metricas?.sociosActivos}</p>
               )}
-              <p className="text-xs text-zinc-500 mt-1">Acceso habilitado hoy</p>
+              <p className="text-[10px] text-zinc-550 mt-1">Acceso habilitado hoy</p>
             </div>
           </div>
 
           {/* Socios Vencidos */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-zinc-700 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-zinc-950/20 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-zinc-700 transition-all duration-300 group">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Socios Vencidos</span>
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-750 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Socios Vencidos</span>
+              <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-750 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               </div>
             </div>
             <div>
               {loading ? (
-                <div className="h-9 w-20 bg-zinc-800 rounded animate-pulse"></div>
+                <div className="h-9 w-20 bg-zinc-850 rounded animate-pulse"></div>
               ) : (
                 <p className="text-3xl font-black text-zinc-300 tracking-tight">{data?.metricas?.sociosVencidos}</p>
               )}
-              <p className="text-xs text-zinc-500 mt-1">Requieren renovación</p>
+              <p className="text-[10px] text-zinc-550 mt-1">Requieren renovación</p>
             </div>
           </div>
 
           {/* Total Socios */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-zinc-700 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-zinc-950/20 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-zinc-700 transition-all duration-300 group">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Total Registrados</span>
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-750 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total Registrados</span>
+              <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-750 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
               </div>
             </div>
             <div>
               {loading ? (
-                <div className="h-9 w-20 bg-zinc-800 rounded animate-pulse"></div>
+                <div className="h-9 w-20 bg-zinc-850 rounded animate-pulse"></div>
               ) : (
                 <p className="text-3xl font-black text-white tracking-tight">{data?.metricas?.totalSocios}</p>
               )}
-              <p className="text-xs text-zinc-500 mt-1">Cuentas activas totales</p>
+              <p className="text-[10px] text-zinc-550 mt-1">Cuentas activas totales</p>
             </div>
           </div>
 
           {/* Ingresos del Mes */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-amber-900/40 transition-colors duration-300">
+          <div className="bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-amber-950/15 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-amber-900/40 transition-all duration-300 group">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Ingresos del Mes</span>
-              <div className="w-10 h-10 rounded-xl bg-amber-950/50 text-amber-400 border border-amber-900/30 flex items-center justify-center shadow-lg shadow-amber-500/10">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ingresos del Mes</span>
+              <div className="w-10 h-10 rounded-xl bg-amber-950/50 text-amber-400 border border-amber-900/30 flex items-center justify-center shadow-lg shadow-amber-500/5 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
             </div>
             <div>
               {loading ? (
-                <div className="h-9 w-32 bg-zinc-800 rounded animate-pulse"></div>
+                <div className="h-9 w-32 bg-zinc-850 rounded animate-pulse"></div>
               ) : (
                 <p className="text-3xl font-black text-amber-500 tracking-tight">Bs {totalRevenue.toLocaleString('es-BO')}</p>
               )}
-              <p className="text-xs text-zinc-500 mt-1">Mes en curso</p>
+              <p className="text-[10px] text-zinc-550 mt-1">Mes en curso</p>
             </div>
           </div>
         </div>
@@ -212,8 +214,8 @@ export default function AdminDashboardPage() {
         {/* 2. Sección del Medio: Mapa de Calor (Heatmap) y KPIs Predictivos */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* MAPA DE CALOR (Heatmap) - Toma 8 de 12 columnas en screens grandes */}
-          <div className="lg:col-span-8 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-6 lg:p-8 shadow-xl relative transition-all duration-300">
+          {/* MAPA DE CALOR (Heatmap) */}
+          <div className="lg:col-span-8 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-[2rem] p-6 lg:p-8 shadow-xl relative transition-all duration-300">
             <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -226,7 +228,7 @@ export default function AdminDashboardPage() {
               {/* Rango de Colores Leyenda */}
               <div className="flex items-center gap-4 text-[10px] font-bold text-zinc-400 bg-zinc-950/60 px-3 py-1.5 rounded-xl border border-zinc-800/80">
                 <div className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded bg-emerald-950/40 border border-emerald-900/40 inline-block"></span>
+                  <span className="w-2.5 h-2.5 rounded bg-emerald-950/30 border border-emerald-950/40 inline-block"></span>
                   <span>0% - 65%</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -234,43 +236,73 @@ export default function AdminDashboardPage() {
                   <span>66% - 85%</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded bg-red-500/20 border border-red-500/20 inline-block animate-pulse"></span>
+                  <span className="w-2.5 h-2.5 rounded bg-red-500/25 border border-red-500/25 inline-block animate-pulse"></span>
                   <span>86%+</span>
                 </div>
               </div>
             </div>
 
             {/* Contenedor del Mapa de Calor */}
-            <div className="relative border border-zinc-800 rounded-2xl p-4 bg-zinc-950/30 overflow-x-auto min-w-full">
+            <div className="relative border border-zinc-800/80 rounded-2xl p-4 bg-zinc-950/30 overflow-x-auto min-w-full">
               {loading ? (
-                <div className="flex flex-col gap-2 py-20 items-center justify-center">
-                  <svg className="animate-spin h-8 w-8 text-amber-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  <p className="text-zinc-500 text-xs font-medium">Procesando registros de check-ins...</p>
+                /* Shimmer Skeleton Loader Grid */
+                <div className="min-w-[640px] animate-pulse space-y-1 py-1">
+                  {/* Header de días */}
+                  <div className="grid grid-cols-[70px_repeat(7,_1fr)] gap-1 mb-2 items-center text-center">
+                    <div className="h-3 bg-zinc-800/40 rounded w-8"></div>
+                    {Array(7).fill(0).map((_, i) => (
+                      <div key={i} className="h-4 bg-zinc-800/60 rounded mx-auto w-10"></div>
+                    ))}
+                  </div>
+                  {/* 18 filas representativas de carga */}
+                  {Array(18).fill(0).map((_, bIdx) => (
+                    <div key={bIdx} className="grid grid-cols-[70px_repeat(7,_1fr)] gap-1 items-center">
+                      <div className="h-3 bg-zinc-800/40 rounded w-10"></div>
+                      {Array(7).fill(0).map((_, dIdx) => (
+                        <div key={dIdx} className="h-5 bg-zinc-800/25 rounded-md"></div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="min-w-[640px] relative">
                   
-                  {/* Tooltip Emergente */}
+                  {/* Tooltip Emergente Premium */}
                   {hoveredCell && (
                     <div 
-                      className="absolute z-40 bg-zinc-900 border border-zinc-750 text-white p-3 rounded-xl shadow-2xl flex flex-col gap-1.5 pointer-events-none text-xs w-52 backdrop-blur-md transition-all duration-75"
+                      className="absolute z-40 bg-zinc-950/90 border border-zinc-800/80 text-white p-3 rounded-2xl shadow-2xl flex flex-col gap-2 pointer-events-none text-xs w-56 backdrop-blur-xl transition-all duration-75"
                       style={{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px` }}
                     >
-                      <div className="flex justify-between items-center font-black border-b border-zinc-800 pb-1 text-zinc-300">
+                      <div className="flex justify-between items-center font-black border-b border-zinc-800/80 pb-1.5 text-zinc-200">
                         <span>{hoveredCell.diaNombre}</span>
                         <span className="text-amber-500">{hoveredCell.bloqueLabel}</span>
                       </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-zinc-500">Promedio:</span>
-                        <span className="font-bold">{hoveredCell.avgVisits} {hoveredCell.avgVisits === 1 ? 'persona' : 'personas'}</span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-zinc-550">Promedio:</span>
+                          <span className="font-bold">{hoveredCell.avgVisits} {hoveredCell.avgVisits === 1 ? 'persona' : 'personas'}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-zinc-550">Ocupación:</span>
+                          <span className={`font-black ${hoveredCell.occupancy >= 86 ? 'text-red-400' : hoveredCell.occupancy >= 66 ? 'text-amber-400' : 'text-emerald-450'}`}>
+                            {hoveredCell.occupancy}%
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-zinc-500">Ocupación:</span>
-                        <span className={`font-black ${hoveredCell.occupancy >= 86 ? 'text-red-400' : hoveredCell.occupancy >= 66 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                          {hoveredCell.occupancy}%
-                        </span>
+                      
+                      {/* Mini barra de ocupación */}
+                      <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden mt-0.5">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            hoveredCell.occupancy >= 86 ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
+                            hoveredCell.occupancy >= 66 ? 'bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
+                            'bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                          }`}
+                          style={{ width: `${Math.min(100, hoveredCell.occupancy)}%` }}
+                        ></div>
                       </div>
-                      <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5 text-center">
+
+                      <div className="text-[10px] text-zinc-500 font-bold italic mt-0.5 text-center">
                         {getOcupacionLabel(hoveredCell.occupancy)}
                       </div>
                     </div>
@@ -287,7 +319,6 @@ export default function AdminDashboardPage() {
 
                     {/* Filas de los 34 bloques */}
                     {blockLabels.map((label, bIdx) => {
-                      // Solo mostramos etiquetas cada hora para evitar sobrecargar visualmente el eje Y
                       const showLabel = bIdx % 2 === 0;
                       
                       return (
@@ -308,7 +339,7 @@ export default function AdminDashboardPage() {
                                 key={dIdx}
                                 onMouseMove={(e) => handleMouseMove(e, cell)}
                                 onMouseLeave={() => setHoveredCell(null)}
-                                className={`h-5 rounded-md cursor-pointer transition-all duration-300 ${colorClass}`}
+                                className={`relative h-5 rounded-md cursor-pointer transition-all duration-200 hover:scale-125 hover:z-30 hover:-translate-y-[1px] ${colorClass}`}
                               ></div>
                             );
                           })}
@@ -324,9 +355,9 @@ export default function AdminDashboardPage() {
 
             {/* Leyenda del Eje / Top 3 de Días (Parte Inferior del Mapa) */}
             {!loading && data?.tendencias?.kpis?.topDias && (
-              <div className="mt-4 border-t border-zinc-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-                <span className="text-zinc-500">Top 3 días más concurridos:</span>
-                <span className="font-black text-amber-500 tracking-wide bg-amber-950/20 px-4 py-1.5 rounded-full border border-amber-900/30">
+              <div className="mt-4 border-t border-zinc-800/80 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                <span className="text-zinc-555 font-medium">Top 3 días más concurridos:</span>
+                <span className="font-black text-amber-500 tracking-wide bg-amber-950/20 px-4 py-1.5 rounded-full border border-amber-900/30 shadow-inner">
                   {data.tendencias.kpis.topDias}
                 </span>
               </div>
@@ -334,12 +365,12 @@ export default function AdminDashboardPage() {
 
           </div>
 
-          {/* KPIS PREDICTIVOS & MÉTODOS DE PAGO - Toma 4 de 12 columnas */}
+          {/* KPIS PREDICTIVOS & MÉTODOS DE PAGO */}
           <div className="lg:col-span-4 space-y-6">
             
-            {/* KPI Predictivo 1: Rango más Vacío (Oportunidad Comercial) */}
-            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-xl flex items-center gap-4 hover:border-emerald-900/30 transition-colors duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-950/50 text-emerald-400 border border-emerald-900/30 flex items-center justify-center shrink-0">
+            {/* KPI Predictivo 1: Rango más Vacío */}
+            <div className="bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-emerald-950/10 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 shadow-xl flex items-center gap-4 hover:border-emerald-700/30 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-950/50 text-emerald-450 border border-emerald-900/30 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.05)] group-hover:scale-115 transition-transform duration-300">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
               </div>
               <div className="min-w-0">
@@ -355,9 +386,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* KPI Predictivo 2: Rango más Crítico (Saturación) */}
-            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-xl flex items-center gap-4 hover:border-red-900/30 transition-colors duration-300">
-              <div className="w-12 h-12 rounded-2xl bg-red-950/50 text-red-400 border border-red-900/30 flex items-center justify-center shrink-0">
+            {/* KPI Predictivo 2: Rango más Crítico */}
+            <div className="bg-gradient-to-br from-zinc-900/60 via-zinc-900/40 to-red-950/10 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 shadow-xl flex items-center gap-4 hover:border-red-700/30 transition-all duration-300 group">
+              <div className="w-12 h-12 rounded-2xl bg-red-950/50 text-red-450 border border-red-900/30 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(239,68,68,0.05)] group-hover:scale-115 transition-transform duration-300">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" /></svg>
               </div>
               <div className="min-w-0">
@@ -369,12 +400,12 @@ export default function AdminDashboardPage() {
                     {data?.tendencias?.kpis?.saturacion || 'Sin registros'}
                   </p>
                 )}
-                <p className="text-[10px] text-red-400/80 font-medium mt-0.5">Evitar congestión / Reforzar personal.</p>
+                <p className="text-[10px] text-red-450/80 font-medium mt-0.5">Evitar congestión / Reforzar personal.</p>
               </div>
             </div>
 
             {/* Métodos de Pago */}
-            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-72">
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-72">
               <div>
                 <h3 className="text-sm font-black text-white flex items-center gap-2 mb-2">
                   <svg className="w-4.5 h-4.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
@@ -385,8 +416,8 @@ export default function AdminDashboardPage() {
 
               {loading ? (
                 <div className="space-y-4 my-auto">
-                  <div className="h-10 bg-zinc-800 rounded animate-pulse"></div>
-                  <div className="h-10 bg-zinc-800 rounded animate-pulse"></div>
+                  <div className="h-10 bg-zinc-850 rounded animate-pulse"></div>
+                  <div className="h-10 bg-zinc-850 rounded animate-pulse"></div>
                 </div>
               ) : (
                 <div className="space-y-5 my-auto">
@@ -396,9 +427,9 @@ export default function AdminDashboardPage() {
                       <span className="text-zinc-400">Efectivo</span>
                       <span className="text-white">Bs {efectivoAmount.toLocaleString('es-BO')} <span className="text-zinc-500 text-[10px] font-normal">({efectivoPercent.toFixed(1)}%)</span></span>
                     </div>
-                    <div className="w-full bg-zinc-950 border border-zinc-800 h-2.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-zinc-950 border border-zinc-900/60 h-2.5 rounded-full overflow-hidden">
                       <div 
-                        className="bg-amber-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(245,158,11,0.5)]" 
+                        className="bg-gradient-to-r from-amber-600 to-amber-400 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(245,158,11,0.3)]" 
                         style={{ width: `${efectivoPercent}%` }}
                       ></div>
                     </div>
@@ -410,9 +441,9 @@ export default function AdminDashboardPage() {
                       <span className="text-zinc-400">Transferencia Bancaria</span>
                       <span className="text-white">Bs {transferenciaAmount.toLocaleString('es-BO')} <span className="text-zinc-500 text-[10px] font-normal">({transferenciaPercent.toFixed(1)}%)</span></span>
                     </div>
-                    <div className="w-full bg-zinc-950 border border-zinc-800 h-2.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-zinc-950 border border-zinc-900/60 h-2.5 rounded-full overflow-hidden">
                       <div 
-                        className="bg-zinc-500 h-full rounded-full transition-all duration-1000" 
+                        className="bg-gradient-to-r from-zinc-650 to-zinc-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(161,161,170,0.2)]" 
                         style={{ width: `${transferenciaPercent}%` }}
                       ></div>
                     </div>
@@ -420,9 +451,9 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
-              <div className="border-t border-zinc-800 pt-3 flex justify-between items-center text-[10px] text-zinc-500">
+              <div className="border-t border-zinc-800/80 pt-3 flex justify-between items-center text-[10px] text-zinc-500">
                 <span>Monto Total Cobrado</span>
-                <span className="font-bold text-zinc-300">Bs {totalRevenue.toLocaleString('es-BO')}</span>
+                <span className="font-bold text-zinc-350">Bs {totalRevenue.toLocaleString('es-BO')}</span>
               </div>
             </div>
 
@@ -430,12 +461,12 @@ export default function AdminDashboardPage() {
 
         </div>
 
-        {/* 3. Sección Inferior: Alertas Operativas / Impacto en el Bolsillo */}
+        {/* 3. Sección Inferior: Alertas Operativas */}
         {!loading && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Cobros Proactivos (Vencimiento Próximo) */}
-            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
+            {/* Cobros Proactivos */}
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -461,7 +492,7 @@ export default function AdminDashboardPage() {
                       const link = getWhatsAppLink(v.telefono, msg);
                       
                       return (
-                        <div key={index} className="flex justify-between items-center p-3 rounded-2xl bg-zinc-950/60 border border-zinc-800 hover:border-zinc-700 transition-all duration-300">
+                        <div key={index} className="flex justify-between items-center p-3.5 rounded-2xl bg-zinc-950/45 border border-zinc-900/80 hover:bg-zinc-950/80 hover:border-zinc-800 transition-all duration-300">
                           <div>
                             <p className="text-xs font-bold text-white leading-tight">{v.nombre}</p>
                             <p className="text-[10px] text-zinc-500 mt-0.5">Vence: {new Date(v.fechaFin).toLocaleDateString('es-ES')}</p>
@@ -471,7 +502,7 @@ export default function AdminDashboardPage() {
                               href={link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 transition-all duration-300 flex items-center gap-1"
+                              className="px-3 py-2 rounded-xl text-[10px] font-bold bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 shadow-sm"
                             >
                               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.458L0 24zm5.824-3.322l.41.244c1.6.953 3.53 1.458 5.72 1.46h.005c5.541 0 10.05-4.507 10.053-10.05.002-2.684-1.042-5.208-2.94-7.11C17.228 3.32 14.711 2.274 12.013 2.274c-5.547 0-10.057 4.51-10.06 10.054-.002 1.899.496 3.754 1.442 5.378l.267.458L2.66 21.3l3.221-.822z" />
@@ -490,7 +521,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Retención Inteligente */}
-            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -499,7 +530,7 @@ export default function AdminDashboardPage() {
                     </svg>
                     Retención Activa
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-950/50 text-amber-400 border border-amber-900/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-red-950/40 text-red-400 border border-red-900/30">
                     {data?.alertas?.inactivos?.length || 0} inact.
                   </span>
                 </div>
@@ -516,7 +547,7 @@ export default function AdminDashboardPage() {
                       const link = getWhatsAppLink(v.telefono, msg);
                       
                       return (
-                        <div key={index} className="flex justify-between items-center p-3 rounded-2xl bg-zinc-950/60 border border-zinc-800 hover:border-zinc-700 transition-all duration-300">
+                        <div key={index} className="flex justify-between items-center p-3.5 rounded-2xl bg-zinc-950/45 border border-zinc-900/80 hover:bg-zinc-950/80 hover:border-zinc-800 transition-all duration-300">
                           <div>
                             <p className="text-xs font-bold text-white leading-tight">{v.nombre}</p>
                             <p className="text-[10px] text-zinc-500 mt-0.5">Último ingreso: {v.ultimaAsistencia}</p>
@@ -526,7 +557,7 @@ export default function AdminDashboardPage() {
                               href={link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 transition-all duration-300 flex items-center gap-1"
+                              className="px-3 py-2 rounded-xl text-[10px] font-bold bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 shadow-sm"
                             >
                               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.458L0 24zm5.824-3.322l.41.244c1.6.953 3.53 1.458 5.72 1.46h.005c5.541 0 10.05-4.507 10.053-10.05.002-2.684-1.042-5.208-2.94-7.11C17.228 3.32 14.711 2.274 12.013 2.274c-5.547 0-10.057 4.51-10.06 10.054-.002 1.899.496 3.754 1.442 5.378l.267.458L2.66 21.3l3.221-.822z" />
@@ -545,7 +576,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Fugas de Caja */}
-            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -554,7 +585,7 @@ export default function AdminDashboardPage() {
                     </svg>
                     Inconsistencias de Caja
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-950/50 text-amber-400 border border-amber-900/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-red-950/40 text-red-400 border border-red-900/30">
                     {data?.alertas?.fugas?.length || 0} fugas
                   </span>
                 </div>
@@ -571,7 +602,7 @@ export default function AdminDashboardPage() {
                       const link = getWhatsAppLink(v.telefono, msg);
                       
                       return (
-                        <div key={index} className="flex justify-between items-center p-3 rounded-2xl bg-zinc-950/60 border border-zinc-800 hover:border-zinc-700 transition-all duration-300">
+                        <div key={index} className="flex justify-between items-center p-3.5 rounded-2xl bg-zinc-950/45 border border-zinc-900/80 hover:bg-zinc-950/80 hover:border-zinc-800 transition-all duration-300">
                           <div>
                             <p className="text-xs font-bold text-white leading-tight">{v.nombre}</p>
                             <p className="text-[9px] text-zinc-500 mt-0.5">Plan: {v.planNombre} (Bs {v.precioPlan.toLocaleString('es-BO')})</p>
@@ -582,7 +613,7 @@ export default function AdminDashboardPage() {
                               href={link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 transition-all duration-300 flex items-center gap-1"
+                              className="px-3 py-2 rounded-xl text-[10px] font-bold bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/30 transition-all duration-200 flex items-center gap-1.5 shadow-sm"
                             >
                               Regularizar
                             </a>
