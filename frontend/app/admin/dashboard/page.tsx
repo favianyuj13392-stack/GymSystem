@@ -7,7 +7,6 @@ const getWhatsAppLink = (telefono: string, mensaje: string) => {
   const cleanNum = telefono.replace(/\D/g, '');
   if (!cleanNum) return '';
   let finalNum = cleanNum;
-  // Si tiene 8 dígitos (típico celular en Bolivia) y no empieza con 591, le agregamos el código de país de Bolivia (591)
   if (cleanNum.length === 8) {
     finalNum = '591' + cleanNum;
   }
@@ -17,15 +16,23 @@ const getWhatsAppLink = (telefono: string, mensaje: string) => {
 export default function AdminDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [rango, setRango] = useState<'mensual' | 'trimestral' | 'semestral' | 'anual'>('mensual');
+
+  // Tooltip flotante del heatmap
+  const [hoveredCell, setHoveredCell] = useState<any>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+  const fetchDashboardData = async (filtroRango: 'mensual' | 'trimestral' | 'semestral' | 'anual') => {
+    setLoading(true);
+    const res = await obtenerResumenDashboard(filtroRango);
+    setData(res);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      const res = await obtenerResumenDashboard();
-      setData(res);
-      setLoading(false);
-    }
-    fetchData();
-  }, []);
+    fetchDashboardData(rango);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rango]);
 
   const totalRevenue = data?.metricas?.ingresosMes || 0;
   const efectivoAmount = data?.metodosPago?.efectivo || 0;
@@ -34,41 +41,103 @@ export default function AdminDashboardPage() {
   const efectivoPercent = totalRevenue > 0 ? (efectivoAmount / totalRevenue) * 100 : 0;
   const transferenciaPercent = totalRevenue > 0 ? (transferenciaAmount / totalRevenue) * 100 : 0;
 
-  // Calculo de máximos para gráficas
-  const maxHoraConteo = data?.tendencias?.horas?.length > 0 
-    ? Math.max(...data.tendencias.horas.map((h: any) => h.conteo)) 
-    : 0;
+  // Pre-indexar el heatmap en una matriz 34 bloques x 7 días
+  const gridData: any[][] = Array(34).fill(0).map(() => Array(7).fill(null));
+  if (data?.tendencias?.heatmap) {
+    data.tendencias.heatmap.forEach((h: any) => {
+      if (h.bloque >= 0 && h.bloque < 34 && h.dia >= 0 && h.dia < 7) {
+        gridData[h.bloque][h.dia] = h;
+      }
+    });
+  }
 
-  const maxDiaConteo = data?.tendencias?.dias?.length > 0 
-    ? Math.max(...data.tendencias.dias.map((d: any) => d.conteo)) 
-    : 0;
+  const blockLabels: string[] = [];
+  for (let h = 6; h <= 22; h++) {
+    const hourStr = String(h).padStart(2, '0');
+    blockLabels.push(`${hourStr}:00`);
+    blockLabels.push(`${hourStr}:30`);
+  }
+
+  const diasSemanaNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+  const handleMouseMove = (e: React.MouseEvent, cell: any) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const container = e.currentTarget.parentElement?.parentElement;
+    const containerRect = container?.getBoundingClientRect();
+    
+    // Posicionar respecto al contenedor del heatmap
+    const x = e.clientX - (containerRect?.left || 0) + 15;
+    const y = e.clientY - (containerRect?.top || 0) - 85;
+    
+    setHoveredCell(cell);
+    setTooltipPos({ x, y });
+  };
+
+  const getCellColorClass = (occupancy: number) => {
+    if (occupancy === 0) return 'bg-zinc-950/40 border border-zinc-900/30 text-zinc-650';
+    if (occupancy >= 86) {
+      return 'bg-red-500/20 border border-red-500/20 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.15)]';
+    } else if (occupancy >= 66) {
+      return 'bg-amber-500/20 border border-amber-500/20 text-amber-300';
+    } else if (occupancy >= 41) {
+      return 'bg-emerald-500/20 border border-emerald-500/20 text-emerald-300';
+    } else if (occupancy >= 16) {
+      return 'bg-emerald-900/30 border border-emerald-900/20 text-emerald-400';
+    } else {
+      return 'bg-emerald-950/15 border border-emerald-950/10 text-emerald-500';
+    }
+  };
+
+  const getOcupacionLabel = (occupancy: number) => {
+    if (occupancy === 0) return 'Vacío';
+    if (occupancy >= 86) return 'Saturación Crítica (Pico)';
+    if (occupancy >= 66) return 'Concurrencia Moderada/Alta';
+    if (occupancy >= 41) return 'Concurrencia Saludable';
+    return 'Baja Afluencia';
+  };
 
   return (
     <div className="min-h-screen bg-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-zinc-950 to-black text-slate-100 p-6 lg:p-10 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Cabecera */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        {/* Cabecera & Filtros */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-950/40 text-amber-400 border border-amber-900/30 tracking-widest uppercase mb-3">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
               Panel de Control Principal
             </div>
             <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight">Dashboard General</h1>
-            <p className="text-zinc-400 mt-1">Métricas de facturación, socios y asistencia en tiempo real.</p>
+            <p className="text-zinc-400 mt-1">Análisis predictivo de concurrencia y aforo en tiempo real.</p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-zinc-500 uppercase font-bold tracking-wider">Hoy</p>
-            <p className="text-sm font-bold text-white mt-0.5">
-              {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
+
+          {/* Selector de Filtros Temporales */}
+          <div className="flex bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-800 backdrop-blur-md">
+            {[
+              { id: 'mensual', label: 'Mensual' },
+              { id: 'trimestral', label: 'Trimestral' },
+              { id: 'semestral', label: 'Semestral' },
+              { id: 'anual', label: 'Anual' }
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setRango(f.id as any)}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 ${
+                  rango === f.id
+                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/10'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* 1. KPIs (Tarjetas Superiores) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Socios Activos */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 group hover:border-amber-900/40 transition-colors duration-300">
+          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-amber-900/40 transition-colors duration-300">
             <div className="flex justify-between items-start">
               <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Socios Activos</span>
               <div className="w-10 h-10 rounded-xl bg-amber-950/50 text-amber-400 border border-amber-900/30 flex items-center justify-center">
@@ -86,7 +155,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Socios Vencidos */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 group hover:border-zinc-700 transition-colors duration-300">
+          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-zinc-700 transition-colors duration-300">
             <div className="flex justify-between items-start">
               <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Socios Vencidos</span>
               <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-750 flex items-center justify-center">
@@ -104,7 +173,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Total Socios */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 group hover:border-zinc-700 transition-colors duration-300">
+          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-zinc-700 transition-colors duration-300">
             <div className="flex justify-between items-start">
               <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Total Registrados</span>
               <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-750 flex items-center justify-center">
@@ -122,7 +191,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Ingresos del Mes */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 group hover:border-amber-900/40 transition-colors duration-300">
+          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-between h-40 hover:border-amber-900/40 transition-colors duration-300">
             <div className="flex justify-between items-start">
               <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Ingresos del Mes</span>
               <div className="w-10 h-10 rounded-xl bg-amber-950/50 text-amber-400 border border-amber-900/30 flex items-center justify-center shadow-lg shadow-amber-500/10">
@@ -140,7 +209,228 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* --- ALERTAS DE IMPACTO EN EL BOLSILLO --- */}
+        {/* 2. Sección del Medio: Mapa de Calor (Heatmap) y KPIs Predictivos */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* MAPA DE CALOR (Heatmap) - Toma 8 de 12 columnas en screens grandes */}
+          <div className="lg:col-span-8 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-6 lg:p-8 shadow-xl relative transition-all duration-300">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  Distribución de Concurrencia (Mapa de Calor)
+                </h3>
+                <p className="text-zinc-500 text-xs mt-1">Ocupación promediada por día y bloques de 30 minutos.</p>
+              </div>
+
+              {/* Rango de Colores Leyenda */}
+              <div className="flex items-center gap-4 text-[10px] font-bold text-zinc-400 bg-zinc-950/60 px-3 py-1.5 rounded-xl border border-zinc-800/80">
+                <div className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded bg-emerald-950/40 border border-emerald-900/40 inline-block"></span>
+                  <span>0% - 65%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded bg-amber-500/20 border border-amber-500/20 inline-block"></span>
+                  <span>66% - 85%</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded bg-red-500/20 border border-red-500/20 inline-block animate-pulse"></span>
+                  <span>86%+</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Contenedor del Mapa de Calor */}
+            <div className="relative border border-zinc-800 rounded-2xl p-4 bg-zinc-950/30 overflow-x-auto min-w-full">
+              {loading ? (
+                <div className="flex flex-col gap-2 py-20 items-center justify-center">
+                  <svg className="animate-spin h-8 w-8 text-amber-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  <p className="text-zinc-500 text-xs font-medium">Procesando registros de check-ins...</p>
+                </div>
+              ) : (
+                <div className="min-w-[640px] relative">
+                  
+                  {/* Tooltip Emergente */}
+                  {hoveredCell && (
+                    <div 
+                      className="absolute z-40 bg-zinc-900 border border-zinc-750 text-white p-3 rounded-xl shadow-2xl flex flex-col gap-1.5 pointer-events-none text-xs w-52 backdrop-blur-md transition-all duration-75"
+                      style={{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px` }}
+                    >
+                      <div className="flex justify-between items-center font-black border-b border-zinc-800 pb-1 text-zinc-300">
+                        <span>{hoveredCell.diaNombre}</span>
+                        <span className="text-amber-500">{hoveredCell.bloqueLabel}</span>
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-zinc-500">Promedio:</span>
+                        <span className="font-bold">{hoveredCell.avgVisits} {hoveredCell.avgVisits === 1 ? 'persona' : 'personas'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-zinc-500">Ocupación:</span>
+                        <span className={`font-black ${hoveredCell.occupancy >= 86 ? 'text-red-400' : hoveredCell.occupancy >= 66 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                          {hoveredCell.occupancy}%
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5 text-center">
+                        {getOcupacionLabel(hoveredCell.occupancy)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Layout Grid: 8 columnas (Labels + 7 días) */}
+                  <div className="grid grid-cols-[70px_repeat(7,_1fr)] gap-1 text-center items-center">
+                    
+                    {/* Headers Fila 1 */}
+                    <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-left pl-1">Horas</div>
+                    {diasSemanaNombres.map((name, i) => (
+                      <div key={i} className="text-xs font-black text-white py-1">{name}</div>
+                    ))}
+
+                    {/* Filas de los 34 bloques */}
+                    {blockLabels.map((label, bIdx) => {
+                      // Solo mostramos etiquetas cada hora para evitar sobrecargar visualmente el eje Y
+                      const showLabel = bIdx % 2 === 0;
+                      
+                      return (
+                        <div key={bIdx} className="contents">
+                          {/* Columna 1: Label del bloque */}
+                          <div className="text-[10px] font-bold text-zinc-650 text-left pl-1 h-5 flex items-center">
+                            {showLabel ? label : ''}
+                          </div>
+
+                          {/* Columnas 2 a 8: Celdas del día */}
+                          {Array(7).fill(0).map((_, dIdx) => {
+                            const cell = gridData[bIdx][dIdx];
+                            const occupancy = cell ? cell.occupancy : 0;
+                            const colorClass = getCellColorClass(occupancy);
+
+                            return (
+                              <div
+                                key={dIdx}
+                                onMouseMove={(e) => handleMouseMove(e, cell)}
+                                onMouseLeave={() => setHoveredCell(null)}
+                                className={`h-5 rounded-md cursor-pointer transition-all duration-300 ${colorClass}`}
+                              ></div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+
+                  </div>
+
+                </div>
+              )}
+            </div>
+
+            {/* Leyenda del Eje / Top 3 de Días (Parte Inferior del Mapa) */}
+            {!loading && data?.tendencias?.kpis?.topDias && (
+              <div className="mt-4 border-t border-zinc-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                <span className="text-zinc-500">Top 3 días más concurridos:</span>
+                <span className="font-black text-amber-500 tracking-wide bg-amber-950/20 px-4 py-1.5 rounded-full border border-amber-900/30">
+                  {data.tendencias.kpis.topDias}
+                </span>
+              </div>
+            )}
+
+          </div>
+
+          {/* KPIS PREDICTIVOS & MÉTODOS DE PAGO - Toma 4 de 12 columnas */}
+          <div className="lg:col-span-4 space-y-6">
+            
+            {/* KPI Predictivo 1: Rango más Vacío (Oportunidad Comercial) */}
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-xl flex items-center gap-4 hover:border-emerald-900/30 transition-colors duration-300">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-950/50 text-emerald-400 border border-emerald-900/30 flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Rango más Vacío (Oportunidad)</span>
+                {loading ? (
+                  <div className="h-5 w-40 bg-zinc-800 rounded animate-pulse mt-1"></div>
+                ) : (
+                  <p className="text-sm font-black text-white mt-1 truncate" title={data?.tendencias?.kpis?.oportunidad}>
+                    {data?.tendencias?.kpis?.oportunidad || 'Sin registros'}
+                  </p>
+                )}
+                <p className="text-[10px] text-emerald-500/80 font-medium mt-0.5">Ideal para promociones u horas felices.</p>
+              </div>
+            </div>
+
+            {/* KPI Predictivo 2: Rango más Crítico (Saturación) */}
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-xl flex items-center gap-4 hover:border-red-900/30 transition-colors duration-300">
+              <div className="w-12 h-12 rounded-2xl bg-red-950/50 text-red-400 border border-red-900/30 flex items-center justify-center shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" /></svg>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest font-sans">Rango más Crítico (Saturación)</span>
+                {loading ? (
+                  <div className="h-5 w-40 bg-zinc-800 rounded animate-pulse mt-1"></div>
+                ) : (
+                  <p className="text-sm font-black text-white mt-1 truncate" title={data?.tendencias?.kpis?.saturacion}>
+                    {data?.tendencias?.kpis?.saturacion || 'Sin registros'}
+                  </p>
+                )}
+                <p className="text-[10px] text-red-400/80 font-medium mt-0.5">Evitar congestión / Reforzar personal.</p>
+              </div>
+            </div>
+
+            {/* Métodos de Pago */}
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-72">
+              <div>
+                <h3 className="text-sm font-black text-white flex items-center gap-2 mb-2">
+                  <svg className="w-4.5 h-4.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                  Métodos de Pago (Mes)
+                </h3>
+                <p className="text-zinc-500 text-[10px] leading-relaxed">Distribución de ingresos del mes calendario en curso.</p>
+              </div>
+
+              {loading ? (
+                <div className="space-y-4 my-auto">
+                  <div className="h-10 bg-zinc-800 rounded animate-pulse"></div>
+                  <div className="h-10 bg-zinc-800 rounded animate-pulse"></div>
+                </div>
+              ) : (
+                <div className="space-y-5 my-auto">
+                  {/* Efectivo */}
+                  <div>
+                    <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+                      <span className="text-zinc-400">Efectivo</span>
+                      <span className="text-white">Bs {efectivoAmount.toLocaleString('es-BO')} <span className="text-zinc-500 text-[10px] font-normal">({efectivoPercent.toFixed(1)}%)</span></span>
+                    </div>
+                    <div className="w-full bg-zinc-950 border border-zinc-800 h-2.5 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-amber-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(245,158,11,0.5)]" 
+                        style={{ width: `${efectivoPercent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Transferencia */}
+                  <div>
+                    <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+                      <span className="text-zinc-400">Transferencia Bancaria</span>
+                      <span className="text-white">Bs {transferenciaAmount.toLocaleString('es-BO')} <span className="text-zinc-500 text-[10px] font-normal">({transferenciaPercent.toFixed(1)}%)</span></span>
+                    </div>
+                    <div className="w-full bg-zinc-950 border border-zinc-800 h-2.5 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-zinc-500 h-full rounded-full transition-all duration-1000" 
+                        style={{ width: `${transferenciaPercent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t border-zinc-800 pt-3 flex justify-between items-center text-[10px] text-zinc-500">
+                <span>Monto Total Cobrado</span>
+                <span className="font-bold text-zinc-300">Bs {totalRevenue.toLocaleString('es-BO')}</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* 3. Sección Inferior: Alertas Operativas / Impacto en el Bolsillo */}
         {!loading && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
@@ -199,7 +489,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Retención Inteligente (Riesgo de Churn) */}
+            {/* Retención Inteligente */}
             <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -254,7 +544,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Fugas de Caja / Alertas de Facturación */}
+            {/* Fugas de Caja */}
             <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-6 shadow-xl flex flex-col justify-between min-h-[380px] hover:border-amber-900/20 transition-all duration-300">
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -309,164 +599,6 @@ export default function AdminDashboardPage() {
 
           </div>
         )}
-
-        {/* 2. Sección del Medio: Métodos de Pago e Historial */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Métodos de Pago */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-8 shadow-xl flex flex-col justify-between h-96">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                Métodos de Pago (Mes)
-              </h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Distribución de ingresos según el método seleccionado.</p>
-            </div>
-
-            {loading ? (
-              <div className="space-y-4 my-auto">
-                <div className="h-12 bg-zinc-800 rounded animate-pulse"></div>
-                <div className="h-12 bg-zinc-800 rounded animate-pulse"></div>
-              </div>
-            ) : (
-              <div className="space-y-6 my-auto">
-                {/* Efectivo */}
-                <div>
-                  <div className="flex justify-between items-center text-sm font-bold mb-2">
-                    <span className="text-zinc-300">Efectivo</span>
-                    <span className="text-white">Bs {efectivoAmount.toLocaleString('es-BO')} <span className="text-zinc-500 text-xs font-normal">({efectivoPercent.toFixed(1)}%)</span></span>
-                  </div>
-                  <div className="w-full bg-zinc-800 h-3 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-amber-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(245,158,11,0.5)]" 
-                      style={{ width: `${efectivoPercent}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Transferencia */}
-                <div>
-                  <div className="flex justify-between items-center text-sm font-bold mb-2">
-                    <span className="text-zinc-300">Transferencia Bancaria</span>
-                    <span className="text-white">Bs {transferenciaAmount.toLocaleString('es-BO')} <span className="text-zinc-500 text-xs font-normal">({transferenciaPercent.toFixed(1)}%)</span></span>
-                  </div>
-                  <div className="w-full bg-zinc-800 h-3 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-zinc-400 h-full rounded-full transition-all duration-1000" 
-                      style={{ width: `${transferenciaPercent}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="border-t border-zinc-800 pt-4 flex justify-between items-center text-xs text-zinc-500">
-              <span>Monto Total Cobrado</span>
-              <span className="font-bold text-zinc-300">Bs {totalRevenue.toLocaleString('es-BO')}</span>
-            </div>
-          </div>
-
-          {/* Gráfico Ocupación por Hora (Ocupa 2 columnas) */}
-          <div className="lg:col-span-2 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-8 shadow-xl flex flex-col justify-between h-96">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Ocupación Horaria (Entradas)
-              </h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Concurrencia acumulada de asistencia por hora en el rango operativo.</p>
-            </div>
-
-            <div className="flex-1 flex items-end justify-between gap-1.5 sm:gap-2 h-44 mt-4 overflow-hidden">
-              {loading ? (
-                Array(17).fill(0).map((_, i) => (
-                  <div key={i} className="flex-1 bg-zinc-800 rounded-t-md animate-pulse" style={{ height: `${Math.random() * 80 + 20}%` }}></div>
-                ))
-              ) : (
-                data?.tendencias?.horas?.map((h: any) => {
-                  const heightPercent = maxHoraConteo > 0 ? (h.conteo / maxHoraConteo) * 100 : 0;
-                  const isPico = maxHoraConteo > 0 && h.conteo === maxHoraConteo;
-
-                  let barColor = "bg-zinc-800 group-hover:bg-zinc-700";
-                  let labelColor = "text-zinc-500";
-                  
-                  if (isPico) {
-                    barColor = "bg-gradient-to-t from-amber-600 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]";
-                    labelColor = "text-amber-400 font-bold";
-                  } else if (h.conteo > 0) {
-                    barColor = "bg-amber-950/40 border border-amber-900/40 text-amber-400";
-                  }
-
-                  return (
-                    <div key={h.hora} className="flex flex-col items-center flex-1 h-full justify-end group">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity mb-1 text-[10px] font-bold text-white bg-zinc-800 px-1 rounded border border-zinc-750">
-                        {h.conteo}
-                      </div>
-                      <div 
-                        className={`w-full max-w-[28px] rounded-t-lg transition-all duration-500 ${barColor}`} 
-                        style={{ height: `${Math.max(heightPercent, 3)}%` }}
-                      ></div>
-                      <span className={`mt-2 text-[9px] sm:text-[10px] tracking-tight ${labelColor}`}>
-                        {h.label.split(':')[0]}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Sección Inferior: Concurrencia por Día */}
-        <div className="grid grid-cols-1 gap-8">
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-[2rem] p-8 shadow-xl flex flex-col justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                Asistencias por Día de la Semana
-              </h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Distribución de check-ins acumulados según el día.</p>
-            </div>
-
-            <div className="grid grid-cols-7 gap-4 mt-8 h-48">
-              {loading ? (
-                Array(7).fill(0).map((_, i) => (
-                  <div key={i} className="bg-zinc-800 rounded-2xl animate-pulse h-full"></div>
-                ))
-              ) : (
-                data?.tendencias?.dias?.map((d: any) => {
-                  const heightPercent = maxDiaConteo > 0 ? (d.conteo / maxDiaConteo) * 100 : 0;
-                  const isMax = maxDiaConteo > 0 && d.conteo === maxDiaConteo;
-                  
-                  let barColor = "bg-zinc-800 group-hover:bg-zinc-700";
-                  let labelColor = "text-zinc-400";
-                  
-                  if (isMax) {
-                    barColor = "bg-gradient-to-t from-amber-700 to-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.35)]";
-                    labelColor = "text-amber-400 font-bold";
-                  } else if (d.conteo > 0) {
-                    barColor = "bg-amber-950/30 border border-amber-900/30";
-                  }
-
-                  return (
-                    <div key={d.dia} className="flex flex-col items-center justify-end h-full group">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity mb-2 text-xs font-bold text-white bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded shadow-lg">
-                        {d.conteo}
-                      </div>
-                      <div className="w-full flex-1 flex flex-col justify-end">
-                        <div 
-                          className={`w-full rounded-t-2xl transition-all duration-700 ${barColor}`}
-                          style={{ height: `${Math.max(heightPercent, 4)}%` }}
-                        ></div>
-                      </div>
-                      <span className={`mt-3 text-xs sm:text-sm font-semibold uppercase tracking-wider ${labelColor}`}>
-                        {d.nombre}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
 
       </div>
     </div>

@@ -109,3 +109,24 @@ ALTER TABLE pagos ADD COLUMN IF NOT EXISTS tipo TEXT CHECK (tipo IN ('Plan', 'Pr
 ALTER TABLE pagos ADD COLUMN IF NOT EXISTS concepto TEXT DEFAULT 'Membresía';
 ALTER TABLE pagos ALTER COLUMN fecha_pago SET DEFAULT NOW();
 
+-- =========================================================================
+-- CONFIGURACIONES GLOBALES Y MULTIZONA
+-- =========================================================================
+
+-- Tabla de configuraciones globales
+CREATE TABLE IF NOT EXISTS configuraciones (
+  id SERIAL PRIMARY KEY,
+  clave TEXT UNIQUE NOT NULL,
+  valor TEXT NOT NULL,
+  descripcion TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Seed de configuraciones iniciales
+INSERT INTO configuraciones (clave, valor, descripcion)
+VALUES 
+  ('capacidad_maxima_simultanea', '100', 'Capacidad máxima simultánea recomendada para el gimnasio'),
+  ('capacidad_zonas', '[{"nombre": "Sala Principal", "capacidad": 60}, {"nombre": "Clases Grupales", "capacidad": 25}, {"nombre": "Cardio", "capacidad": 15}]', 'Subdivisión de capacidad por zonas')
+ON CONFLICT (clave) DO NOTHING;
+
+
