@@ -62,14 +62,38 @@ export async function obtenerResumenDashboard(rango: 'mensual' | 'trimestral' | 
     }
     const limitStr = limitDate.toISOString();
 
-    const { data: asistencias, error: errAsistencias } = await supabaseServer
-      .from('asistencias')
-      .select('registrado_at')
-      .eq('tipo', 'entrada')
-      .gte('registrado_at', limitStr);
+    let asistencias: { registrado_at: string }[] = [];
+    let from = 0;
+    let to = 999;
+    let hasMore = true;
+    while (hasMore) {
+      const { data: batch, error: errBatch } = await supabaseServer
+        .from('asistencias')
+        .select('registrado_at')
+        .eq('tipo', 'entrada')
+        .gte('registrado_at', limitStr)
+        .range(from, to);
+      
+      if (errBatch) {
+        console.error('Error al paginar asistencias:', errBatch);
+        break;
+      }
+      
+      if (batch && batch.length > 0) {
+        asistencias = [...asistencias, ...batch];
+        if (batch.length < 1000) {
+          hasMore = false;
+        } else {
+          from += 1000;
+          to += 1000;
+        }
+      } else {
+        hasMore = false;
+      }
+    }
 
     // Obtener la capacidad máxima simultánea recomendada del gimnasio de configuraciones
-    let capacidadMax = 100;
+    let capacidadMax = 18; // Fallback de 18 para que el mapa de calor de la demo tenga colores vistosos
     try {
       const { data: config } = await supabaseServer
         .from('configuraciones')
@@ -77,10 +101,10 @@ export async function obtenerResumenDashboard(rango: 'mensual' | 'trimestral' | 
         .eq('clave', 'capacidad_maxima_simultanea')
         .single();
       if (config && config.valor) {
-        capacidadMax = Number(config.valor) || 100;
+        capacidadMax = Number(config.valor) || 18;
       }
     } catch (err) {
-      console.warn('Advertencia al consultar capacidad máxima (usando 100 por defecto):', err);
+      console.warn('Advertencia al consultar capacidad máxima (usando 18 por defecto):', err);
     }
 
     const jsDayToIdx = [6, 0, 1, 2, 3, 4, 5]; // 0=Dom -> 6, 1=Lun -> 0...
