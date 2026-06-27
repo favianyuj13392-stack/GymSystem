@@ -114,7 +114,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Selector de Filtros Temporales */}
-          <div className="flex bg-zinc-950/65 p-1.5 rounded-2xl border border-zinc-900 backdrop-blur-xl">
+          <div className="flex bg-zinc-950/65 p-1.5 rounded-2xl border border-zinc-900 backdrop-blur-xl overflow-x-auto max-w-full flex-nowrap gap-1 no-scrollbar shrink-0">
             {[
               { id: 'mensual', label: 'Mensual' },
               { id: 'trimestral', label: 'Trimestral' },
@@ -124,7 +124,7 @@ export default function AdminDashboardPage() {
               <button
                 key={f.id}
                 onClick={() => setRango(f.id as any)}
-                className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all duration-300 ${
+                className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all duration-300 shrink-0 ${
                   rango === f.id
                     ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white shadow-lg shadow-amber-500/20'
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40'

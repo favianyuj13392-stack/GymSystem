@@ -12,6 +12,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<'admin' | 'empleado'>('empleado');
   const [userName, setUserName] = useState<string>('Cargando...');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
   
   // Excluir la barra lateral en el carnet digital, landing page y pantalla de login
   const isPublicRoute = pathname?.startsWith('/socio/') || pathname === '/login' || pathname === '/';
@@ -209,39 +214,119 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Barra de Navegación Inferior (Mobile/Tablet) */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-slate-900 border-t border-slate-800 text-slate-400 flex items-center justify-between px-2 pb-safe z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex-1 flex flex-col items-center justify-center py-3 relative ${
-                isActive ? 'text-amber-500' : 'hover:text-white'
-              }`}
-            >
-              {isActive && (
-                <div className="absolute top-0 inset-x-0 h-0.5 bg-amber-500 mx-auto w-8 shadow-[0_2px_8px_rgba(245,158,11,0.8)]"></div>
-              )}
-              <div className="mb-1">{item.icon}</div>
-              <span className="text-[10px] font-bold tracking-wide">{item.name}</span>
-            </Link>
-          );
-        })}
+      {/* Mobile Top Header */}
+      <header className="lg:hidden fixed top-0 inset-x-0 h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-40 shadow-md">
         <button
-          onClick={() => cerrarSesion()}
-          className="flex-1 flex flex-col items-center justify-center py-3 relative hover:text-amber-500 text-slate-400"
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 -ml-2 text-slate-450 hover:text-white rounded-lg focus:outline-none"
+          aria-label="Abrir menú"
         >
-          <div className="mb-1">
-            <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          </div>
-          <span className="text-[10px] font-bold tracking-wide">Salir</span>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
-      </nav>
+        
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <span className="font-black text-lg text-white tracking-tight">DarkoGym</span>
+        </div>
+
+        <div className="w-8 h-8 rounded-full bg-slate-850 border border-slate-750 flex items-center justify-center">
+          <span className="text-xs font-bold text-slate-300">
+            {userName.slice(0, 2).toUpperCase()}
+          </span>
+        </div>
+      </header>
+
+      {/* Mobile Menu Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+        />
+      )}
+
+      {/* Mobile Drawer (Left Slide-out) */}
+      <aside className={`lg:hidden flex flex-col w-72 bg-slate-900 border-r border-slate-800 text-slate-300 fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Header Drawer */}
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span className="font-black text-lg text-white tracking-tight">DarkoGym</span>
+          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 -mr-2 text-slate-400 hover:text-white rounded-lg focus:outline-none"
+            aria-label="Cerrar menú"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Links */}
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+          <div className="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">Menú Principal</div>
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                  isActive 
+                    ? 'bg-amber-500/10 text-amber-500' 
+                    : 'hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <div className={`${isActive ? 'text-amber-500' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                  {item.icon}
+                </div>
+                <span className={`font-semibold text-sm ${isActive ? 'text-amber-500' : ''}`}>{item.name}</span>
+                {isActive && (
+                  <div className="ml-auto w-1.5 h-5 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.6)]"></div>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer Drawer */}
+        <div className="p-5 border-t border-slate-800">
+          <div className="flex items-center gap-3 px-2 mb-4">
+            <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-slate-300">
+                {userName.slice(0, 2).toUpperCase()}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-white truncate">{userName}</p>
+              <p className="text-[10px] text-slate-550 truncate">{userEmail || 'cargando...'}</p>
+              <p className="text-[9px] text-amber-500 font-bold uppercase tracking-wider mt-0.5">
+                {role === 'admin' ? 'Administrador' : 'Recepcionista'}
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => cerrarSesion()}
+            className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-800 hover:bg-amber-950/50 text-slate-400 hover:text-amber-500 border border-slate-700 hover:border-amber-900/50 transition-colors text-xs font-bold"
+          >
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            Cerrar Sesión
+          </button>
+        </div>
+      </aside>
 
       {/* Contenedor Principal (Donde van las páginas) */}
-      <main className="flex-1 flex flex-col w-full lg:pl-64 pb-20 lg:pb-0 h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col w-full lg:pl-64 pt-16 lg:pt-0 h-screen overflow-y-auto">
         <div className="flex-1 w-full relative">
           {children}
         </div>
