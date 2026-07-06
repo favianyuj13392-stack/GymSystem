@@ -1,6 +1,26 @@
 "use server"
 
 import { supabaseServer } from '@/lib/supabaseServer';
+import { createClient } from '@/utils/supabase/server';
+
+async function verificarAdmin() {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error('No autorizado: Sesión no válida');
+  }
+  
+  const { data: empleado, error: dbError } = await supabaseServer
+    .from('empleados')
+    .select('rol')
+    .eq('id', user.id)
+    .single();
+    
+  if (dbError || empleado?.rol !== 'admin') {
+    throw new Error('No autorizado: Se requiere rol de administrador');
+  }
+  return user;
+}
 
 export async function obtenerHistorialPagos(filtros?: {
   busqueda?: string;
@@ -9,6 +29,8 @@ export async function obtenerHistorialPagos(filtros?: {
   fechaFin?: string;
 }) {
   try {
+    await verificarAdmin();
+    
     let query = supabaseServer
       .from('pagos')
       .select(`
@@ -75,6 +97,8 @@ export async function obtenerHistorialPagos(filtros?: {
 
 export async function obtenerSumaIngresosMes() {
   try {
+    await verificarAdmin();
+    
     const hoyObj = new Date();
     // Definimos el inicio del mes en UTC para evitar truncamientos por zona horaria
     const startOfMonth = new Date(Date.UTC(hoyObj.getUTCFullYear(), hoyObj.getUTCMonth(), 1, 0, 0, 0, 0)).toISOString();
@@ -105,7 +129,7 @@ export async function registrarPagoManual(datosPago: {
   tipo: 'Producto' | 'Otros';
 }) {
   try {
-    const { data: { user } } = await supabaseServer.auth.getUser();
+    await verificarAdmin();
 
     const { data, error } = await supabaseServer
       .from('pagos')

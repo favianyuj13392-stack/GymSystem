@@ -1,9 +1,31 @@
 "use server"
 
 import { supabaseServer } from '@/lib/supabaseServer';
+import { createClient } from '@/utils/supabase/server';
+
+async function verificarAdmin() {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error('No autorizado: Sesión no válida');
+  }
+  
+  const { data: empleado, error: dbError } = await supabaseServer
+    .from('empleados')
+    .select('rol')
+    .eq('id', user.id)
+    .single();
+    
+  if (dbError || empleado?.rol !== 'admin') {
+    throw new Error('No autorizado: Se requiere rol de administrador');
+  }
+  return user;
+}
 
 export async function obtenerEmpleados() {
   try {
+    await verificarAdmin();
+    
     const { data, error } = await supabaseServer
       .from('empleados')
       .select('*')
@@ -22,6 +44,8 @@ export async function obtenerEmpleados() {
 
 export async function crearEmpleado(nombre: string, apellido: string, email: string, rol: 'admin' | 'empleado', contrasena: string) {
   try {
+    await verificarAdmin();
+
     // 1. Crear el usuario en la sección de autenticación de Supabase (con el rol de administrador del servidor)
     const { data: authData, error: authError } = await supabaseServer.auth.admin.createUser({
       email,
@@ -61,9 +85,10 @@ export async function crearEmpleado(nombre: string, apellido: string, email: str
 
 export async function eliminarEmpleado(id: string) {
   try {
+    const user = await verificarAdmin();
+    
     // 1. Verificar si el usuario que ejecuta la acción es el mismo que se va a eliminar
-    const { data: { user } } = await supabaseServer.auth.getUser();
-    if (user && user.id === id) {
+    if (user.id === id) {
       return { success: false, error: 'No podés eliminar tu propia cuenta de administrador.' };
     }
 
