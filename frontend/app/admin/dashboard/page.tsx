@@ -60,14 +60,21 @@ export default function AdminDashboardPage() {
 
   const diasSemanaNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-  const handleMouseMove = (e: React.MouseEvent, cell: any) => {
+  const handleMouseMove = (e: React.MouseEvent, cell: any, dIdx?: number) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const container = e.currentTarget.parentElement?.parentElement;
     const containerRect = container?.getBoundingClientRect();
     
     // Posicionar respecto al contenedor del heatmap
-    const x = e.clientX - (containerRect?.left || 0) + 15;
+    const xRelative = e.clientX - (containerRect?.left || 0);
     const y = e.clientY - (containerRect?.top || 0) - 85;
+    
+    let x = xRelative + 15;
+    // Si dIdx >= 4 (Vie, Sáb, Dom) posicionamos el tooltip a la izquierda de la celda
+    // para evitar que se desborde del contenedor y se corte la tarjeta.
+    if (dIdx !== undefined && dIdx >= 4) {
+      x = xRelative - 240; // 224px (w-56) + 16px de margen
+    }
     
     setHoveredCell(cell);
     setTooltipPos({ x, y });
@@ -243,7 +250,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Contenedor del Mapa de Calor */}
-            <div className="relative border border-zinc-800/80 rounded-2xl p-4 bg-zinc-950/30 overflow-x-auto min-w-full">
+            <div className="relative border border-zinc-800/80 rounded-2xl p-4 bg-zinc-950/30 overflow-x-auto min-w-full custom-scrollbar">
               {loading ? (
                 /* Shimmer Skeleton Loader Grid */
                 <div className="min-w-[640px] animate-pulse space-y-1 py-1">
@@ -337,7 +344,7 @@ export default function AdminDashboardPage() {
                             return (
                               <div
                                 key={dIdx}
-                                onMouseMove={(e) => handleMouseMove(e, cell)}
+                                onMouseMove={(e) => handleMouseMove(e, cell, dIdx)}
                                 onMouseLeave={() => setHoveredCell(null)}
                                 className={`relative h-5 rounded-md cursor-pointer transition-all duration-200 hover:scale-125 hover:z-30 hover:-translate-y-[1px] ${colorClass}`}
                               ></div>
