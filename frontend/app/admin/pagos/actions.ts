@@ -155,3 +155,33 @@ export async function registrarPagoManual(datosPago: {
   }
 }
 
+export async function obtenerProductosConfigurados() {
+  try {
+    await verificarAdmin();
+    const { data, error } = await supabaseServer
+      .from('configuraciones')
+      .select('valor')
+      .eq('clave', 'productos_venta')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error al obtener productos configurados:', error);
+      return [];
+    }
+
+    if (data && data.valor) {
+      try {
+        return JSON.parse(data.valor);
+      } catch (e) {
+        console.error('Error al parsear productos_venta:', e);
+        return [];
+      }
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fatal en obtenerProductosConfigurados:', error);
+    return [];
+  }
+}
+
+

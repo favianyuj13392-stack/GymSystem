@@ -15,11 +15,17 @@ export default function ConfigPage() {
   const [nuevaZonaNombre, setNuevaZonaNombre] = useState('');
   const [nuevaZonaCapacidad, setNuevaZonaCapacidad] = useState<number | ''>('');
 
+  // Estados para productos
+  const [productos, setProductos] = useState<any[]>([]);
+  const [nuevoProdNombre, setNuevoProdNombre] = useState('');
+  const [nuevoProdPrecio, setNuevoProdPrecio] = useState<number | ''>('');
+
   useEffect(() => {
     async function loadData() {
       const res = await obtenerConfiguraciones();
       setCapacidadGlobal(res.capacidadGlobal);
       setZonas(res.zonas);
+      setProductos(res.productos || []);
       setLoading(false);
     }
     loadData();
@@ -31,7 +37,7 @@ export default function ConfigPage() {
     setMensajeExito('');
     setMensajeError('');
 
-    const res = await guardarConfiguraciones(capacidadGlobal, zonas);
+    const res = await guardarConfiguraciones(capacidadGlobal, zonas, productos);
     setSaving(false);
     if (res.success) {
       setMensajeExito('Configuración guardada exitosamente.');
@@ -39,6 +45,37 @@ export default function ConfigPage() {
     } else {
       setMensajeError(res.error || 'Ocurrió un error al guardar la configuración.');
     }
+  };
+
+  const handleAgregarProducto = () => {
+    if (!nuevoProdNombre.trim() || nuevoProdPrecio === '' || nuevoProdPrecio <= 0) {
+      alert('Por favor ingresá un nombre válido y un precio mayor a cero.');
+      return;
+    }
+    const nuevoProducto = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9),
+      nombre: nuevoProdNombre.trim(),
+      precio: Number(nuevoProdPrecio)
+    };
+    setProductos([...productos, nuevoProducto]);
+    setNuevoProdNombre('');
+    setNuevoProdPrecio('');
+  };
+
+  const handleEliminarProducto = (id: string) => {
+    const updated = productos.filter(p => p.id !== id);
+    setProductos(updated);
+  };
+
+  const handleEditProductoNombre = (id: string, valor: string) => {
+    const updated = productos.map(p => p.id === id ? { ...p, nombre: valor } : p);
+    setProductos(updated);
+  };
+
+  const handleEditProductoPrecio = (id: string, valor: string) => {
+    const num = Number(valor) || 0;
+    const updated = productos.map(p => p.id === id ? { ...p, precio: num } : p);
+    setProductos(updated);
   };
 
   const handleAgregarZona = () => {
@@ -210,6 +247,90 @@ export default function ConfigPage() {
               <div className="flex justify-between items-center text-xs text-zinc-500 pt-4 border-t border-zinc-800/50">
                 <span>Suma de capacidad distribuida</span>
                 <span className="font-bold text-zinc-300">Bs {sumaZonas} personas (Global: {capacidadGlobal})</span>
+              </div>
+            </div>
+
+            {/* Catálogo de Productos */}
+            <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 lg:p-8 shadow-lg space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10M4 7v10l8 4" /></svg>
+                  Catálogo de Productos de Venta
+                </h3>
+                <p className="text-zinc-500 text-xs">Cargá y definí el precio de los productos que se venden en recepción (bebidas, suplementos, indumentaria, etc.).</p>
+              </div>
+
+              {/* Grid Productos */}
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                {productos.length === 0 ? (
+                  <p className="text-zinc-500 text-sm py-4 text-center">No hay productos registrados en el catálogo. ¡Agregá uno abajo!</p>
+                ) : (
+                  productos.map((prod) => (
+                    <div key={prod.id} className="flex flex-col sm:flex-row items-center gap-4 bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-4">
+                      <div className="flex-1 w-full">
+                        <label className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase">Nombre del Producto</label>
+                        <input
+                          type="text"
+                          value={prod.nombre}
+                          onChange={(e) => handleEditProductoNombre(prod.id, e.target.value)}
+                          className="w-full bg-transparent border-0 border-b border-zinc-800 focus:border-amber-500 focus:outline-none text-sm text-white py-1 font-semibold"
+                          placeholder="Ej. Agua 500ml"
+                        />
+                      </div>
+                      
+                      <div className="w-full sm:w-32">
+                        <label className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase">Precio (Bs)</label>
+                        <input
+                          type="number"
+                          min={0.1}
+                          step="any"
+                          value={prod.precio}
+                          onChange={(e) => handleEditProductoPrecio(prod.id, e.target.value)}
+                          className="w-full bg-transparent border-0 border-b border-zinc-800 focus:border-amber-500 focus:outline-none text-sm text-white py-1 font-bold"
+                          placeholder="Precio"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleEliminarProducto(prod.id)}
+                        className="text-zinc-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors shrink-0 self-end sm:self-center"
+                        title="Eliminar Producto"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Formulario Agregar Producto */}
+              <div className="border-t border-zinc-800/80 pt-6">
+                <p className="text-xs font-bold text-zinc-400 mb-3 uppercase">Agregar Nuevo Producto</p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <input
+                    type="text"
+                    placeholder="Nombre del Producto (Ej. Barra de Proteína)"
+                    value={nuevoProdNombre}
+                    onChange={(e) => setNuevoProdNombre(e.target.value)}
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Precio en Bs (Ej. 12.50)"
+                    value={nuevoProdPrecio}
+                    onChange={(e) => setNuevoProdPrecio(e.target.value !== '' ? Number(e.target.value) : '')}
+                    className="w-full sm:w-36 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAgregarProducto}
+                    className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold px-4 py-2.5 rounded-xl border border-zinc-750 transition-colors text-sm shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    Agregar
+                  </button>
+                </div>
               </div>
             </div>
 

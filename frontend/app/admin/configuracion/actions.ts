@@ -16,12 +16,14 @@ export async function obtenerConfiguraciones() {
           { nombre: 'Sala Principal', capacidad: 60 },
           { nombre: 'Clases Grupales', capacidad: 25 },
           { nombre: 'Cardio', capacidad: 15 }
-        ]
+        ],
+        productos: []
       };
     }
 
     const capacidadRow = data?.find(c => c.clave === 'capacidad_maxima_simultanea');
     const zonasRow = data?.find(c => c.clave === 'capacidad_zonas');
+    const productosRow = data?.find(c => c.clave === 'productos_venta');
 
     const capacidadGlobal = capacidadRow ? Number(capacidadRow.valor) : 100;
     
@@ -39,7 +41,16 @@ export async function obtenerConfiguraciones() {
       }
     }
 
-    return { capacidadGlobal, zonas };
+    let productos = [];
+    if (productosRow && productosRow.valor) {
+      try {
+        productos = JSON.parse(productosRow.valor);
+      } catch (e) {
+        console.error('Error al parsear productos_venta:', e);
+      }
+    }
+
+    return { capacidadGlobal, zonas, productos };
   } catch (error) {
     console.error('Error fatal al obtener configuraciones:', error);
     return {
@@ -48,12 +59,13 @@ export async function obtenerConfiguraciones() {
         { nombre: 'Sala Principal', capacidad: 60 },
         { nombre: 'Clases Grupales', capacidad: 25 },
         { nombre: 'Cardio', capacidad: 15 }
-      ]
+      ],
+      productos: []
     };
   }
 }
 
-export async function guardarConfiguraciones(capacidadGlobal: number, zonas: any[]) {
+export async function guardarConfiguraciones(capacidadGlobal: number, zonas: any[], productos: any[]) {
   try {
     // Intentar upsert de la capacidad global
     const { error: errGlobal } = await supabaseServer
@@ -79,6 +91,19 @@ export async function guardarConfiguraciones(capacidadGlobal: number, zonas: any
     if (errZonas) {
       console.error('Error guardando capacidad por zonas:', errZonas);
       return { success: false, error: 'No se pudo guardar la configuración por zonas en la base de datos.' };
+    }
+
+    // Intentar upsert de los productos de venta
+    const { error: errProductos } = await supabaseServer
+      .from('configuraciones')
+      .upsert(
+        { clave: 'productos_venta', valor: JSON.stringify(productos), descripcion: 'Catálogo de productos de venta' },
+        { onConflict: 'clave' }
+      );
+
+    if (errProductos) {
+      console.error('Error guardando productos de venta:', errProductos);
+      return { success: false, error: 'No se pudo guardar el catálogo de productos en la base de datos.' };
     }
 
     return { success: true };

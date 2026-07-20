@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { obtenerHistorialPagos, obtenerSumaIngresosMes, registrarPagoManual } from './actions';
+import { obtenerHistorialPagos, obtenerSumaIngresosMes, registrarPagoManual, obtenerProductosConfigurados } from './actions';
 import { obtenerListaSocios } from '../socios/actions';
 
 export default function PagosPage() {
@@ -31,6 +31,10 @@ export default function PagosPage() {
 
   const [savingManual, setSavingManual] = useState(false);
   const [errorManual, setErrorManual] = useState('');
+
+  // Catálogo de productos
+  const [productos, setProductos] = useState<any[]>([]);
+  const [selectedProductoId, setSelectedProductoId] = useState('');
 
   const fetchDatos = async () => {
     setLoading(true);
@@ -65,7 +69,20 @@ export default function PagosPage() {
 
   useEffect(() => {
     loadSocios();
+    loadProductos();
   }, []);
+
+  const loadProductos = async () => {
+    const list = await obtenerProductosConfigurados();
+    setProductos(list);
+  };
+
+  const handleTipoChange = (tipo: 'Producto' | 'Otros') => {
+    setNewTipo(tipo);
+    setNewConcepto('');
+    setNewMonto(0);
+    setSelectedProductoId('');
+  };
 
   const limpiarFiltros = () => {
     setBusqueda('');
@@ -84,6 +101,9 @@ export default function PagosPage() {
     setSelectedSocioName('');
     setIsSocioDropdownOpen(false);
     setErrorManual('');
+    setSelectedProductoId('');
+    // Recargar productos por si se añadieron en Configuración
+    loadProductos();
     setIsRegisterModalOpen(true);
   };
 
@@ -361,7 +381,7 @@ export default function PagosPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setNewTipo('Producto')}
+                    onClick={() => handleTipoChange('Producto')}
                     className={`py-2 px-4 rounded-xl text-sm font-bold border transition-all ${
                       newTipo === 'Producto'
                         ? 'bg-amber-600 border-amber-500 text-white'
@@ -372,7 +392,7 @@ export default function PagosPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setNewTipo('Otros')}
+                    onClick={() => handleTipoChange('Otros')}
                     className={`py-2 px-4 rounded-xl text-sm font-bold border transition-all ${
                       newTipo === 'Otros'
                         ? 'bg-amber-600 border-amber-500 text-white'
@@ -386,16 +406,55 @@ export default function PagosPage() {
 
               {/* Concepto */}
               <div>
-                <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase">Concepto / Descripción *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder={newTipo === 'Producto' ? 'ej. Agua 500ml, Batido de Proteína' : 'ej. Alquiler de Locker, Inscripción'}
-                  value={newConcepto}
-                  onChange={(e) => setNewConcepto(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
-                  disabled={savingManual}
-                />
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5 uppercase">
+                  {newTipo === 'Producto' ? 'Seleccionar Producto *' : 'Concepto / Descripción *'}
+                </label>
+                {newTipo === 'Producto' ? (
+                  productos.length === 0 ? (
+                    <div className="text-xs text-amber-400 bg-amber-950/20 p-3.5 rounded-xl border border-amber-900/30">
+                      No hay productos en el catálogo. Configuralos primero en{' '}
+                      <a href="/admin/configuracion" className="underline font-bold text-amber-550 hover:text-amber-450 transition-colors">
+                        Configuración
+                      </a>.
+                    </div>
+                  ) : (
+                    <select
+                      required
+                      value={selectedProductoId}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        setSelectedProductoId(id);
+                        const prod = productos.find(p => p.id === id);
+                        if (prod) {
+                          setNewConcepto(prod.nombre);
+                          setNewMonto(prod.precio);
+                        } else {
+                          setNewConcepto('');
+                          setNewMonto(0);
+                        }
+                      }}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
+                      disabled={savingManual}
+                    >
+                      <option value="">-- Seleccioná un producto --</option>
+                      {productos.map((prod) => (
+                        <option key={prod.id} value={prod.id}>
+                          {prod.nombre} (Bs {prod.precio})
+                        </option>
+                      ))}
+                    </select>
+                  )
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    placeholder="ej. Alquiler de Locker, Inscripción"
+                    value={newConcepto}
+                    onChange={(e) => setNewConcepto(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                    disabled={savingManual}
+                  />
+                )}
               </div>
 
               {/* Monto & Método */}

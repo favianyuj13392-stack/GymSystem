@@ -162,7 +162,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navegación Principal */}
-        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar">
           <div className="px-4 text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Menú Principal</div>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -272,7 +272,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Links */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
           <div className="px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">Menú Principal</div>
           {navItems.map((item) => {
             const isActive = pathname === item.href;
@@ -326,7 +326,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Contenedor Principal (Donde van las páginas) */}
-      <main className="flex-1 flex flex-col w-full lg:pl-64 pt-16 lg:pt-0 h-screen overflow-y-auto">
+      <main className="flex-1 flex flex-col w-full lg:pl-64 pt-16 lg:pt-0 h-screen overflow-y-auto custom-scrollbar">
         <div className="flex-1 w-full relative">
           {children}
         </div>
