@@ -6,12 +6,65 @@
 CREATE TABLE IF NOT EXISTS gimnasios (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre TEXT NOT NULL,
-  estado_suscripcion TEXT NOT NULL DEFAULT 'activa' CHECK (estado_suscripcion IN ('activa', 'suspendida', 'prueba')),
+  suscripcion_activa_id UUID, -- Se agregará referencia a la tabla suscripciones más abajo
+  activo_hasta DATE,
   creado_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 -- Habilitar Row Level Security (RLS) en 'gimnasios'
 ALTER TABLE gimnasios ENABLE ROW LEVEL SECURITY;
+
+-- Crear tabla 'suscripciones'
+CREATE TABLE IF NOT EXISTS suscripciones (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  gimnasio_id UUID NOT NULL REFERENCES gimnasios(id) ON DELETE CASCADE,
+  fecha_inicio DATE NOT NULL,
+  fecha_fin DATE NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'expirada', 'cancelada')),
+  monto_pagado DECIMAL(10, 2) NOT NULL,
+  moneda TEXT DEFAULT 'ARS',
+  meses_pagados INTEGER NOT NULL DEFAULT 1,
+  creado_por_admin UUID NOT NULL REFERENCES auth.users(id),
+  creado_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  actualizado_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  notas TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_suscripciones_gimnasio_id ON suscripciones(gimnasio_id);
+CREATE INDEX IF NOT EXISTS idx_suscripciones_estado ON suscripciones(estado);
+CREATE INDEX IF NOT EXISTS idx_suscripciones_fecha_fin ON suscripciones(fecha_fin);
+
+ALTER TABLE suscripciones ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Superadmin inserta y actualiza suscripciones" ON suscripciones FOR ALL TO authenticated
+USING ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'))
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
+
+CREATE POLICY "Usuarios ven sus propias suscripciones" ON suscripciones FOR SELECT TO authenticated
+USING (gimnasio_id = get_jwt_gimnasio_id());
+
+-- Agregamos la Foreign Key a gimnasios ahora que la tabla suscripciones existe
+ALTER TABLE gimnasios ADD CONSTRAINT fk_suscripcion_activa FOREIGN KEY (suscripcion_activa_id) REFERENCES suscripciones(id) ON DELETE SET NULL;
+
+
+-- Crear tabla 'eventos_suscripcion'
+CREATE TABLE IF NOT EXISTS eventos_suscripcion (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  gimnasio_id UUID NOT NULL REFERENCES gimnasios(id) ON DELETE CASCADE,
+  tipo_evento TEXT NOT NULL CHECK (tipo_evento IN ('pago_registrado', 'activado', 'desactivado', 'expirado', 'renovado')),
+  descripcion TEXT,
+  usuario_admin UUID REFERENCES auth.users(id),
+  creado_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_eventos_suscripcion_gimnasio_id ON eventos_suscripcion(gimnasio_id);
+
+ALTER TABLE eventos_suscripcion ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Superadmin inserta y actualiza eventos" ON eventos_suscripcion FOR ALL TO authenticated
+USING ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'))
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
+
+CREATE POLICY "Usuarios ven sus propios eventos" ON eventos_suscripcion FOR SELECT TO authenticated
+USING (gimnasio_id = get_jwt_gimnasio_id());
 
 -- Crear la tabla 'empleados' para gestionar los roles y datos de los trabajadores del gimnasio.
 CREATE TABLE IF NOT EXISTS empleados (
@@ -35,6 +88,52 @@ ALTER TABLE empleados ENABLE ROW LEVEL SECURITY;
 -- MULTI-TENANT RLS POLICIES USING JWT CLAIMS
 -- =========================================================================
 
+-- Función para verificar si un gimnasio tiene la suscripción activa
+CREATE OR REPLACE FUNCTION is_gimnasio_activo(p_gimnasio_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT EXISTS(
+    SELECT 1 FROM suscripciones
+    WHERE gimnasio_id = p_gimnasio_id
+      AND estado = 'activa'
+      AND fecha_fin >= CURRENT_DATE
+    LIMIT 1
+  );
+$$;
+
+-- Función que marca suscripciones como expiradas (para el cron job)
+CREATE OR REPLACE FUNCTION expirar_suscripciones_vencidas()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_suscripcion RECORD;
+BEGIN
+  -- Buscar todas las suscripciones que vencieron hoy o antes
+  FOR v_suscripcion IN
+    SELECT id, gimnasio_id
+    FROM suscripciones
+    WHERE estado = 'activa'
+      AND fecha_fin < CURRENT_DATE
+  LOOP
+    -- Marcar como expirada
+    UPDATE suscripciones
+    SET estado = 'expirada'
+    WHERE id = v_suscripcion.id;
+
+    -- Registrar evento
+    INSERT INTO eventos_suscripcion
+      (gimnasio_id, tipo_evento, descripcion)
+    VALUES
+      (v_suscripcion.gimnasio_id, 'expirado',
+       'Suscripción expirada automáticamente');
+  END LOOP;
+END;
+$$;
+
+
 -- Creamos una función de utilidad para obtener el gimnasio_id del usuario logueado desde su JWT
 CREATE OR REPLACE FUNCTION get_jwt_gimnasio_id()
 RETURNS UUID
@@ -46,30 +145,40 @@ $$;
 
 -- Política para Gimnasios
 -- Solo superadmin puede ver/modificar todos. Administradores/empleados ven el suyo.
-CREATE POLICY "Usuarios ven su propio gimnasio"
+DROP POLICY IF EXISTS "Usuarios ven su propio gimnasio" ON gimnasios;
+CREATE POLICY "Usuarios ven su propio gimnasio o superadmin ve todos"
 ON gimnasios FOR SELECT TO authenticated
-USING (id = get_jwt_gimnasio_id());
+USING (id = get_jwt_gimnasio_id() OR (auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
+
+CREATE POLICY "Superadmin actualiza gimnasios"
+ON gimnasios FOR UPDATE TO authenticated
+USING ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'))
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
 
 -- Políticas para Empleados
-CREATE POLICY "Empleados ven empleados de su gimnasio"
+DROP POLICY IF EXISTS "Empleados ven empleados de su gimnasio" ON empleados;
+CREATE POLICY "Empleados acceso por suscripción activa"
 ON empleados FOR SELECT TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id());
+USING (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+);
 
 CREATE POLICY "Admin puede insertar empleados en su gimnasio"
 ON empleados FOR INSERT TO authenticated
 WITH CHECK (
   gimnasio_id = get_jwt_gimnasio_id()
-  AND (auth.jwt() -> 'app_metadata' ->> 'rol') IN ('admin', 'superadmin')
+  AND (SELECT rol FROM empleados WHERE id = auth.uid()) IN ('admin', 'superadmin')
 );
 
 CREATE POLICY "Admin puede actualizar empleados en su gimnasio"
 ON empleados FOR UPDATE TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id() AND (auth.jwt() -> 'app_metadata' ->> 'rol') IN ('admin', 'superadmin'))
-WITH CHECK (gimnasio_id = get_jwt_gimnasio_id() AND (auth.jwt() -> 'app_metadata' ->> 'rol') IN ('admin', 'superadmin'));
+USING (gimnasio_id = get_jwt_gimnasio_id() AND (SELECT rol FROM empleados WHERE id = auth.uid()) IN ('admin', 'superadmin'))
+WITH CHECK (gimnasio_id = get_jwt_gimnasio_id() AND (SELECT rol FROM empleados WHERE id = auth.uid()) IN ('admin', 'superadmin'));
 
 CREATE POLICY "Admin puede borrar empleados en su gimnasio"
 ON empleados FOR DELETE TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id() AND (auth.jwt() -> 'app_metadata' ->> 'rol') IN ('admin', 'superadmin'));
+USING (gimnasio_id = get_jwt_gimnasio_id() AND (SELECT rol FROM empleados WHERE id = auth.uid()) IN ('admin', 'superadmin'));
 
 
 -- Políticas genéricas de aislamiento SaaS para las tablas operativas:
@@ -151,33 +260,75 @@ ON socios (lower(nombre));
 -- Políticas genéricas de aislamiento SaaS para las tablas operativas:
 -- SOCIOS
 ALTER TABLE socios ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Aislamiento SaaS socios" ON socios FOR ALL TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id()) WITH CHECK (gimnasio_id = get_jwt_gimnasio_id());
+CREATE OR REPLACE POLICY "Aislamiento SaaS con validación suscripción" ON socios FOR ALL TO authenticated
+USING (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+)
+WITH CHECK (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+);
 
 -- ASISTENCIAS
 ALTER TABLE asistencias ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Aislamiento SaaS asistencias" ON asistencias FOR ALL TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id()) WITH CHECK (gimnasio_id = get_jwt_gimnasio_id());
+USING (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+)
+WITH CHECK (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+);
 
 -- MEMBRESIAS
 ALTER TABLE membresias ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Aislamiento SaaS membresias" ON membresias FOR ALL TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id()) WITH CHECK (gimnasio_id = get_jwt_gimnasio_id());
+USING (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+)
+WITH CHECK (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+);
 
 -- PAGOS
 ALTER TABLE pagos ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Aislamiento SaaS pagos" ON pagos FOR ALL TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id()) WITH CHECK (gimnasio_id = get_jwt_gimnasio_id());
+USING (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+)
+WITH CHECK (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+);
 
 -- PLANES
 ALTER TABLE planes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Aislamiento SaaS planes" ON planes FOR ALL TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id()) WITH CHECK (gimnasio_id = get_jwt_gimnasio_id());
+USING (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+)
+WITH CHECK (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+);
 
 -- CONFIGURACIONES
 ALTER TABLE configuraciones ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Aislamiento SaaS configuraciones" ON configuraciones FOR ALL TO authenticated
-USING (gimnasio_id = get_jwt_gimnasio_id()) WITH CHECK (gimnasio_id = get_jwt_gimnasio_id());
+USING (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+)
+WITH CHECK (
+  gimnasio_id = get_jwt_gimnasio_id()
+  AND is_gimnasio_activo(gimnasio_id)
+);
 
 
 -- =========================================================================
@@ -221,26 +372,23 @@ BEGIN
 
   -- Solo proceder si es un registro "Dueño de Gimnasio" (viene con nombre_gimnasio)
   IF gimnasio_nombre IS NOT NULL THEN
-    -- 1. Crear el nuevo gimnasio
-    INSERT INTO public.gimnasios (nombre, estado_suscripcion)
-    VALUES (gimnasio_nombre, 'prueba')
+    -- Crear nuevo gimnasio SIN suscripción activa
+    INSERT INTO public.gimnasios (nombre)
+    VALUES (gimnasio_nombre)
     RETURNING id INTO nuevo_gimnasio_id;
 
-    -- 2. Crear el empleado asociado con rol superadmin
+    -- Crear empleado (superadmin del gimnasio)
     INSERT INTO public.empleados (id, gimnasio_id, nombre, email, rol)
-    VALUES (NEW.id, nuevo_gimnasio_id, COALESCE(usuario_nombre, 'Admin'), NEW.email, 'superadmin');
+    VALUES (NEW.id, nuevo_gimnasio_id, COALESCE(usuario_nombre, 'Admin'),
+            NEW.email, 'superadmin');
 
-    -- 3. Actualizar el app_metadata del usuario para inyectar gimnasio_id y rol
-    -- IMPORTANTE: Supabase Auth utiliza app_metadata en el JWT para el RLS
+    -- NO inyectar gimnasio_id en JWT aún
+    -- El acceso solo se habilita cuando superadmin registra el primer pago
     UPDATE auth.users
     SET raw_app_meta_data = jsonb_set(
-      jsonb_set(
-        COALESCE(raw_app_meta_data, '{}'::jsonb),
-        '{gimnasio_id}',
-        to_jsonb(nuevo_gimnasio_id)
-      ),
-      '{rol}',
-      '"superadmin"'
+      COALESCE(raw_app_meta_data, '{}'::jsonb),
+      '{estado}',
+      '"pendiente_activacion"'
     )
     WHERE id = NEW.id;
   END IF;
@@ -254,6 +402,50 @@ DROP TRIGGER IF EXISTS on_auth_user_created_tenant ON auth.users;
 CREATE TRIGGER on_auth_user_created_tenant
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user_tenant();
+
+
+-- =========================================================================
+-- ACTIVACIÓN DE TENANTS: INYECTAR JWT TRAS EL PRIMER PAGO
+-- =========================================================================
+-- Cuando el superadmin registra el primer pago (o un pago nuevo) para un gimnasio,
+-- buscamos a su dueño (empleado superadmin o admin) y le inyectamos el gimnasio_id en el JWT
+CREATE OR REPLACE FUNCTION public.activar_tenant_despues_de_pago()
+RETURNS trigger AS $$
+DECLARE
+  v_dueño_id UUID;
+BEGIN
+  IF NEW.estado = 'activa' THEN
+    -- Buscar el ID de usuario del dueño del gimnasio (el que lo registró, típicamente rol superadmin o admin)
+    SELECT id INTO v_dueño_id
+    FROM public.empleados
+    WHERE gimnasio_id = NEW.gimnasio_id
+      AND rol IN ('superadmin', 'admin')
+    ORDER BY created_at ASC
+    LIMIT 1;
+
+    IF FOUND THEN
+      -- Actualizar el app_metadata del usuario para inyectar gimnasio_id y cambiar el estado
+      UPDATE auth.users
+      SET raw_app_meta_data = jsonb_set(
+        jsonb_set(
+          COALESCE(raw_app_meta_data, '{}'::jsonb),
+          '{gimnasio_id}',
+          to_jsonb(NEW.gimnasio_id)
+        ),
+        '{estado}',
+        '"activo"'
+      )
+      WHERE id = v_dueño_id;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_suscripcion_activada ON suscripciones;
+CREATE TRIGGER on_suscripcion_activada
+  AFTER INSERT OR UPDATE ON suscripciones
+  FOR EACH ROW EXECUTE PROCEDURE public.activar_tenant_despues_de_pago();
 
 -- 5. Configuración de Seguridad en Cascadas
 -- Se recomienda revisar que todas las Foreign Keys tengan 'ON DELETE CASCADE' o 'SET NULL'
