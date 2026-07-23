@@ -63,7 +63,9 @@ export async function obtenerListaSocios(busqueda?: string, filtroEstado?: strin
     // Filtrado en memoria por estado
     let filtrados = sociosProcesados;
     if (filtroEstado && filtroEstado !== 'Todos') {
-      const filtro = filtroEstado.toLowerCase(); // 'activo' o 'vencido'
+      let filtro = filtroEstado.toLowerCase();
+      if (filtro === 'activos') filtro = 'activo';
+      if (filtro === 'vencidos') filtro = 'vencido';
       filtrados = sociosProcesados.filter(s => s.estadoCalculado === filtro);
     }
 
