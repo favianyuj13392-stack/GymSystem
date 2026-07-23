@@ -51,61 +51,61 @@ export default function AnaliticasRetencionPage() {
   const minConteo = conteosPositivos.length > 0 ? Math.min(...conteosPositivos) : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 lg:p-10 font-sans">
+    <div className="min-h-screen bg-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/15 via-zinc-950 to-black text-slate-100 p-6 lg:p-10 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Cabecera */}
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Inteligencia y Retención</h1>
-          <p className="text-slate-500 mt-1">Monitorea tus KPIs, la concurrencia y recupera clientes inactivos.</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Inteligencia y Retención</h1>
+          <p className="text-zinc-400 mt-1">Monitorea tus KPIs, la concurrencia y recupera clientes inactivos.</p>
         </div>
 
         {/* 1. KPIs (Tarjetas Superiores) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Tarjeta Socios Activos */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-50 rounded-full blur-2xl"></div>
+          <div className="bg-zinc-900/40 rounded-3xl p-6 border border-zinc-800 flex items-center gap-6 relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-950/10 rounded-full blur-2xl"></div>
             <div className="w-16 h-16 rounded-2xl bg-red-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30 relative z-10">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
             </div>
             <div className="relative z-10">
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Socios Activos</p>
+              <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-1">Socios Activos</p>
               {loading ? (
-                <div className="h-10 w-24 bg-slate-200 rounded animate-pulse"></div>
+                <div className="h-10 w-24 bg-zinc-800 rounded animate-pulse"></div>
               ) : (
-                <p className="text-4xl font-black text-slate-800">{metricas?.sociosActivos}</p>
+                <p className="text-4xl font-black text-white">{metricas?.sociosActivos}</p>
               )}
             </div>
           </div>
 
           {/* Tarjeta Ingresos */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 rounded-full blur-2xl"></div>
+          <div className="bg-zinc-900/40 rounded-3xl p-6 border border-zinc-800 flex items-center gap-6 relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-950/10 rounded-full blur-2xl"></div>
             <div className="w-16 h-16 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/30 relative z-10">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
             <div className="relative z-10">
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Ingresos (Mes)</p>
+              <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-1">Ingresos (Mes)</p>
               {loading ? (
-                <div className="h-10 w-32 bg-slate-200 rounded animate-pulse"></div>
+                <div className="h-10 w-32 bg-zinc-800 rounded animate-pulse"></div>
               ) : (
-                <p className="text-4xl font-black text-slate-800">Bs {metricas?.ingresosMes?.toLocaleString('es-BO')}</p>
+                <p className="text-4xl font-black text-white">Bs {metricas?.ingresosMes?.toLocaleString('es-BO')}</p>
               )}
             </div>
           </div>
 
           {/* Tarjeta Alertas */}
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex items-center gap-6 relative overflow-hidden">
-             <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-50 rounded-full blur-2xl"></div>
+          <div className="bg-zinc-900/40 rounded-3xl p-6 border border-zinc-800 flex items-center gap-6 relative overflow-hidden">
+             <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-950/10 rounded-full blur-2xl"></div>
              <div className="w-16 h-16 rounded-2xl bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/30 relative z-10">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
             <div className="relative z-10">
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Clientes Alerta</p>
+              <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-1">Clientes Alerta</p>
               {loading ? (
-                <div className="h-10 w-24 bg-slate-200 rounded animate-pulse"></div>
+                <div className="h-10 w-24 bg-zinc-800 rounded animate-pulse"></div>
               ) : (
-                <p className="text-4xl font-black text-slate-800">{metricas?.clientesAlerta}</p>
+                <p className="text-4xl font-black text-white">{metricas?.clientesAlerta}</p>
               )}
             </div>
           </div>
@@ -115,18 +115,18 @@ export default function AnaliticasRetencionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Gráfico de Horarios Concurrentes (Ocupa 2 columnas) */}
-          <div className="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-slate-200 p-8 flex flex-col">
-            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
+          <div className="lg:col-span-2 bg-zinc-900/40 rounded-[2rem] border border-zinc-800 p-8 flex flex-col">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-2">
               <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
               Concurrencia por Hora
             </h3>
-            <p className="text-slate-500 mb-8">Volumen histórico de asistencias agrupadas por hora del día.</p>
+            <p className="text-zinc-400 mb-8">Volumen histórico de asistencias agrupadas por hora del día.</p>
             
             <div className="flex-1 flex items-end justify-between gap-1 sm:gap-2 h-64 mt-auto">
               {loading ? (
                 // Skeletons de barras
                 Array(16).fill(0).map((_, i) => (
-                  <div key={i} className="flex-1 bg-slate-100 rounded-t-md animate-pulse" style={{ height: `${Math.random() * 80 + 20}%` }}></div>
+                  <div key={i} className="flex-1 bg-zinc-800/40 rounded-t-md animate-pulse" style={{ height: `${Math.random() * 80 + 20}%` }}></div>
                 ))
               ) : (
                 horarios.map((h, i) => {
@@ -134,22 +134,23 @@ export default function AnaliticasRetencionPage() {
                   const isPico = maxConteo > 0 && h.conteo === maxConteo;
                   const isMuerta = maxConteo > 0 && h.conteo > 0 && h.conteo === minConteo;
 
-                  let barColor = "bg-red-200 group-hover:bg-red-300";
-                  let labelColor = "text-slate-400";
+                  let barColor = "bg-zinc-900/30 border border-zinc-900/50";
+                  let labelColor = "text-zinc-500";
                   if (isPico) {
-                    barColor = "bg-red-600 group-hover:bg-red-700 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
-                    labelColor = "text-red-600 font-bold";
+                    barColor = "bg-red-600 hover:bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)] border border-red-500/50";
+                    labelColor = "text-red-500 font-bold";
                   } else if (isMuerta) {
-                    barColor = "bg-green-400 group-hover:bg-green-500";
-                    labelColor = "text-green-600 font-bold";
+                    barColor = "bg-green-600 hover:bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.4)] border border-green-500/50";
+                    labelColor = "text-green-500 font-bold";
                   } else if (h.conteo > 0) {
-                    barColor = "bg-red-50 group-hover:bg-red-100 border border-red-200";
+                    barColor = "bg-zinc-750 group-hover:bg-zinc-650 border border-zinc-600";
+                    labelColor = "text-zinc-400";
                   }
 
                   return (
                     <div key={h.hora} className="flex flex-col items-center flex-1 h-full justify-end group">
                       {/* Tooltip Hover */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity mb-2 text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity mb-2 text-xs font-bold text-zinc-300 bg-zinc-850 px-2 py-1 rounded">
                         {h.conteo}
                       </div>
                       
@@ -170,62 +171,62 @@ export default function AnaliticasRetencionPage() {
             </div>
             
             {!loading && maxConteo > 0 && (
-              <div className="mt-8 flex flex-wrap justify-center gap-6 pt-6 border-t border-slate-100 text-sm">
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-600"></div><span className="font-medium text-slate-700">Hora Pico</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-300"></div><span className="font-medium text-slate-700">Trafico Normal</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-400"></div><span className="font-medium text-slate-700">Hora Muerta</span></div>
+              <div className="mt-8 flex flex-wrap justify-center gap-6 pt-6 border-t border-zinc-800 text-sm">
+                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-600 border border-red-500/50"></div><span className="font-medium text-zinc-400">Hora Pico</span></div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-zinc-750 border border-zinc-600"></div><span className="font-medium text-zinc-400">Tráfico Normal</span></div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-green-600 border border-green-500/50"></div><span className="font-medium text-zinc-400">Hora Muerta</span></div>
               </div>
             )}
           </div>
 
           {/* Módulo de Retención (Alertas de Abandono) */}
-          <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[600px]">
-            <div className="p-6 border-b border-slate-100 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+          <div className="bg-zinc-900/40 rounded-[2rem] border border-zinc-800 overflow-hidden flex flex-col h-[600px]">
+            <div className="p-6 border-b border-zinc-800 bg-zinc-950/40">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Alertas de Abandono
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Socios ausentes por 14 días o más.</p>
+              <p className="text-sm text-zinc-450 mt-1">Socios ausentes por 14 días o más.</p>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 bg-zinc-950/20 custom-scrollbar">
               {loading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white border border-slate-100 animate-pulse">
-                      <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
-                      <div className="flex-1 py-1"><div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div><div className="h-3 bg-slate-200 rounded w-1/2"></div></div>
+                    <div key={i} className="flex gap-4 p-4 rounded-2xl bg-zinc-900/40 border border-zinc-850 animate-pulse">
+                      <div className="w-12 h-12 bg-zinc-800 rounded-full"></div>
+                      <div className="flex-1 py-1"><div className="h-4 bg-zinc-800 rounded w-3/4 mb-2"></div><div className="h-3 bg-zinc-800 rounded w-1/2"></div></div>
                     </div>
                   ))}
                 </div>
               ) : enRiesgo.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-400 text-center p-6">
+                <div className="h-full flex flex-col items-center justify-center text-zinc-500 text-center p-6">
                   <svg className="w-16 h-16 mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  <p className="text-lg font-medium text-slate-600">¡Excelente retención!</p>
-                  <p className="text-sm mt-1">No hay clientes en riesgo de abandono.</p>
+                  <p className="text-lg font-medium text-zinc-400">¡Excelente retención!</p>
+                  <p className="text-sm mt-1 text-zinc-500">No hay clientes en riesgo de abandono.</p>
                 </div>
               ) : (
                 <ul className="space-y-4">
                   {enRiesgo.map(socio => (
-                    <li key={socio.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <li key={socio.id} className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800 hover:border-zinc-700/60 transition-all">
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="relative w-14 h-14 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                        <div className="relative w-14 h-14 rounded-full overflow-hidden bg-zinc-950 border border-zinc-800 shrink-0">
                            {socio.foto_url ? (
                             <Image loader={cloudinaryLoader} src={socio.foto_url} alt={socio.nombre} fill className="object-cover" sizes="56px" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <div className="w-full h-full flex items-center justify-center text-zinc-500">
                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             </div>
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-slate-800 truncate">{socio.nombre}</p>
+                          <p className="font-bold text-white truncate">{socio.nombre}</p>
                           <div className="mt-1 flex items-center gap-2 flex-wrap">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${socio.diasAusente > 21 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${socio.diasAusente > 21 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'}`}>
                               {socio.diasAusente} días ausente
                             </span>
                             {socio.esVencido && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-500">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-zinc-850 text-zinc-400 border border-zinc-800">
                                 Vencido
                               </span>
                             )}
@@ -239,8 +240,8 @@ export default function AnaliticasRetencionPage() {
                         rel="noreferrer"
                         className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-sm transition-all shadow-sm ${
                           socio.telefono 
-                            ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/20' 
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                            ? 'bg-green-500 hover:bg-green-600 text-white shadow-green-500/20 cursor-pointer' 
+                            : 'bg-zinc-950 text-zinc-600 border border-zinc-850 cursor-not-allowed'
                         }`}
                         onClick={(e) => { if(!socio.telefono) e.preventDefault(); }}
                       >
