@@ -21,6 +21,26 @@ interface Evento {
   creado_at: string;
 }
 
+import { useRouter } from 'next/navigation';
+
+interface Suscripcion {
+  id: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estado: string;
+  monto_pagado: number;
+  meses_pagados: number;
+  notas: string;
+  creado_at: string;
+}
+
+interface Evento {
+  id: string;
+  tipo_evento: string;
+  descripcion: string;
+  creado_at: string;
+}
+
 export default function DetallesGimnasioPage({
   params,
 }: {
@@ -28,13 +48,23 @@ export default function DetallesGimnasioPage({
 }) {
   const resolvedParams = use(params);
   const supabase = createClient();
+  const router = useRouter();
   const [gimnasio, setGimnasio] = useState<{nombre: string} | null>(null);
   const [suscripciones, setSuscripciones] = useState<Suscripcion[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
     async function cargarDetalles() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const jwtData = user?.app_metadata as { rol?: string };
+
+      if (jwtData?.rol !== 'system_admin') {
+        router.replace('/');
+        return;
+      }
+      setAuthorized(true);
       setLoading(true);
       try {
         // Gimnasio
@@ -67,9 +97,10 @@ export default function DetallesGimnasioPage({
       }
     }
     cargarDetalles();
-  }, [resolvedParams.id, supabase]);
+  }, [resolvedParams.id, supabase, router]);
 
   if (loading) return <div className="text-white">Cargando...</div>;
+  if (!authorized) return null;
 
   return (
     <div className="space-y-6">

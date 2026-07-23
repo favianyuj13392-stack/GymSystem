@@ -16,12 +16,24 @@ interface Gimnasio {
 export default function SuscripcionesPage() {
   const [gimnasios, setGimnasios] = useState<Gimnasio[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
-    cargarGimnasios();
-  }, []);
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const jwtData = user?.app_metadata as { rol?: string };
+
+      if (jwtData?.rol !== 'system_admin') {
+        router.replace('/');
+        return;
+      }
+      setAuthorized(true);
+      cargarGimnasios();
+    }
+    checkAuth();
+  }, [router, supabase]);
 
   async function cargarGimnasios() {
     setLoading(true);
@@ -79,6 +91,7 @@ export default function SuscripcionesPage() {
   }
 
   if (loading) return <div className="text-white">Cargando...</div>;
+  if (!authorized) return null;
 
   return (
     <div>

@@ -9,6 +9,7 @@ export default function NuevoPagoPage() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
+  const [authorized, setAuthorized] = useState(false);
   const [gimnasioId, setGimnasioId] = useState(
     searchParams.get('gimnasio') || ''
   );
@@ -16,12 +17,25 @@ export default function NuevoPagoPage() {
   const [monto, setMonto] = useState('');
   const [meses, setMeses] = useState(1);
   const [notas, setNotas] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Loading auth initially
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    cargarGimnasios();
-  }, []);
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const jwtData = user?.app_metadata as { rol?: string };
+
+      if (jwtData?.rol !== 'system_admin') {
+        router.replace('/');
+        return;
+      }
+      setAuthorized(true);
+      setLoading(false);
+      cargarGimnasios();
+    }
+    checkAuth();
+  }, [router, supabase]);
 
   async function cargarGimnasios() {
     try {
@@ -38,7 +52,7 @@ export default function NuevoPagoPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setSubmitting(true);
 
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -65,15 +79,33 @@ export default function NuevoPagoPage() {
       // Redirigir al dashboard
       router.push('/backoffice/suscripciones');
     } catch (err: unknown) {
+      let message = 'Error al registrar pago';
+
       if (err instanceof Error) {
-        setError(err.message);
-      } else {
-         setError('Error al registrar pago');
+        // Parsear errores de Supabase lanzados desde el RPC
+        if (err.message.includes('No tienes permiso')) {
+          message = 'No tienes permiso para registrar pagos (se requiere system_admin).';
+        } else if (err.message.includes('Gimnasio no encontrado')) {
+          message = 'El gimnasio seleccionado no existe.';
+        } else if (err.message.includes('El monto debe ser mayor a 0')) {
+          message = 'El monto del pago debe ser mayor a $0.';
+        } else if (err.message.includes('Los meses deben estar entre 1 y 36')) {
+          message = 'La cantidad de meses debe estar entre 1 y 36.';
+        } else if (err.message.includes('Este gimnasio ya tiene una suscripción activa')) {
+          message = 'Este gimnasio ya tiene una suscripción activa. No se pueden registrar pagos superpuestos por ahora.';
+        } else {
+          message = err.message;
+        }
       }
+
+      setError(message);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
+
+  if (loading) return <div className="text-white">Verificando permisos...</div>;
+  if (!authorized) return null;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -162,10 +194,10 @@ export default function NuevoPagoPage() {
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
-            disabled={loading}
+            disabled={submitting}
             className="flex-1 bg-amber-500 text-black px-4 py-2 rounded-lg font-bold hover:bg-amber-400 disabled:opacity-50"
           >
-            {loading ? 'Guardando...' : 'Registrar Pago'}
+            {submitting ? 'Guardando...' : 'Registrar Pago'}
           </button>
           <button
             type="button"

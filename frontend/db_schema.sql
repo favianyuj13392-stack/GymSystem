@@ -454,8 +454,29 @@ BEGIN
     RAISE EXCEPTION 'No tienes permiso para registrar pagos (se requiere system_admin)';
   END IF;
 
-  -- Calcular fecha_fin
-  v_fecha_fin := (NOW() AT TIME ZONE 'UTC') + (p_meses || ' months')::INTERVAL;
+  -- Validaciones de datos
+  IF p_monto <= 0 THEN
+    RAISE EXCEPTION 'El monto debe ser mayor a 0';
+  END IF;
+
+  IF p_meses <= 0 OR p_meses > 36 THEN
+    RAISE EXCEPTION 'Los meses deben estar entre 1 y 36';
+  END IF;
+
+  -- Validar existencia del gimnasio y que no tenga ya una suscripción activa
+  IF NOT EXISTS (SELECT 1 FROM gimnasios WHERE id = p_gimnasio_id) THEN
+    RAISE EXCEPTION 'Gimnasio no encontrado';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM suscripciones
+    WHERE gimnasio_id = p_gimnasio_id AND estado = 'activa' AND fecha_fin >= CURRENT_DATE
+  ) THEN
+    RAISE EXCEPTION 'Este gimnasio ya tiene una suscripción activa';
+  END IF;
+
+  -- Calcular fecha_fin en UTC
+  v_fecha_fin := ((NOW() AT TIME ZONE 'UTC') + (p_meses || ' months')::INTERVAL)::DATE;
 
   -- Insertar suscripción (esto dispara el trigger actualizar_estado_gimnasio)
   INSERT INTO suscripciones (gimnasio_id, fecha_inicio, fecha_fin, estado, monto_pagado, meses_pagados, creado_por_admin, notas)
