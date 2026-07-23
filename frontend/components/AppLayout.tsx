@@ -146,7 +146,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <div className="flex min-h-screen bg-slate-50 w-full overflow-hidden">
+    <div className="flex min-h-screen bg-zinc-950 w-full overflow-hidden">
       
       {/* Sidebar para PC (Izquierda Fija) */}
       <aside className="hidden lg:flex flex-col w-64 bg-slate-900 border-r border-slate-800 text-slate-300 fixed inset-y-0 left-0 z-50">
