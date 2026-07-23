@@ -36,8 +36,8 @@ CREATE INDEX IF NOT EXISTS idx_suscripciones_fecha_fin ON suscripciones(fecha_fi
 
 ALTER TABLE suscripciones ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Superadmin inserta y actualiza suscripciones" ON suscripciones FOR ALL TO authenticated
-USING ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'))
-WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
+USING ((auth.jwt() -> 'app_metadata' ->> 'rol') = 'system_admin')
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') = 'system_admin');
 
 CREATE POLICY "Usuarios ven sus propias suscripciones" ON suscripciones FOR SELECT TO authenticated
 USING (gimnasio_id = get_jwt_gimnasio_id());
@@ -60,8 +60,8 @@ CREATE INDEX IF NOT EXISTS idx_eventos_suscripcion_gimnasio_id ON eventos_suscri
 
 ALTER TABLE eventos_suscripcion ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Superadmin inserta y actualiza eventos" ON eventos_suscripcion FOR ALL TO authenticated
-USING ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'))
-WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
+USING ((auth.jwt() -> 'app_metadata' ->> 'rol') = 'system_admin')
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') = 'system_admin');
 
 CREATE POLICY "Usuarios ven sus propios eventos" ON eventos_suscripcion FOR SELECT TO authenticated
 USING (gimnasio_id = get_jwt_gimnasio_id());
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS empleados (
   gimnasio_id UUID NOT NULL REFERENCES gimnasios(id) ON DELETE CASCADE,
   nombre TEXT NOT NULL,
   email TEXT NOT NULL,
-  rol TEXT NOT NULL CHECK (rol IN ('superadmin', 'admin', 'empleado')),
+  rol TEXT NOT NULL CHECK (rol IN ('system_admin', 'superadmin', 'admin', 'empleado')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   UNIQUE(gimnasio_id, email) -- El email es unico por gimnasio
 );
@@ -89,19 +89,38 @@ ALTER TABLE empleados ENABLE ROW LEVEL SECURITY;
 -- =========================================================================
 
 -- Función para verificar si un gimnasio tiene la suscripción activa
+-- Función para verificar si un gimnasio tiene la suscripción activa (OPTIZIMIZADA)
 CREATE OR REPLACE FUNCTION is_gimnasio_activo(p_gimnasio_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
 AS $$
   SELECT EXISTS(
-    SELECT 1 FROM suscripciones
-    WHERE gimnasio_id = p_gimnasio_id
-      AND estado = 'activa'
-      AND fecha_fin >= CURRENT_DATE
-    LIMIT 1
+    SELECT 1 FROM gimnasios
+    WHERE id = p_gimnasio_id
+      AND suscripcion_activa_id IS NOT NULL
+      AND activo_hasta >= CURRENT_DATE
   );
 $$;
+
+-- Función que actualiza el estado del gimnasio (para mantener la desnormalización)
+CREATE OR REPLACE FUNCTION actualizar_estado_gimnasio()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE gimnasios
+  SET
+    suscripcion_activa_id = NEW.id,
+    activo_hasta = NEW.fecha_fin
+  WHERE id = NEW.gimnasio_id AND NEW.estado = 'activa';
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para mantener el gimnasio sincronizado al cambiar suscripciones
+DROP TRIGGER IF EXISTS trg_actualizar_estado_gimnasio ON suscripciones;
+CREATE TRIGGER trg_actualizar_estado_gimnasio
+  AFTER INSERT OR UPDATE OF estado, fecha_fin ON suscripciones
+  FOR EACH ROW EXECUTE PROCEDURE actualizar_estado_gimnasio();
 
 -- Función que marca suscripciones como expiradas (para el cron job)
 CREATE OR REPLACE FUNCTION expirar_suscripciones_vencidas()
@@ -133,6 +152,10 @@ BEGIN
 END;
 $$;
 
+-- Configurar pg_cron para correr la expiracion (se comentan para evitar error local en psql, deben correrse en supabase sql editor directamente)
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- SELECT cron.schedule('expirar-suscripciones', '1 0 * * *', 'SELECT expirar_suscripciones_vencidas()');
+
 
 -- Creamos una función de utilidad para obtener el gimnasio_id del usuario logueado desde su JWT
 CREATE OR REPLACE FUNCTION get_jwt_gimnasio_id()
@@ -144,16 +167,16 @@ AS $$
 $$;
 
 -- Política para Gimnasios
--- Solo superadmin puede ver/modificar todos. Administradores/empleados ven el suyo.
+-- Solo system_admin puede ver/modificar todos. Administradores/empleados ven el suyo.
 DROP POLICY IF EXISTS "Usuarios ven su propio gimnasio" ON gimnasios;
 CREATE POLICY "Usuarios ven su propio gimnasio o superadmin ve todos"
 ON gimnasios FOR SELECT TO authenticated
-USING (id = get_jwt_gimnasio_id() OR (auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
+USING (id = get_jwt_gimnasio_id() OR (auth.jwt() -> 'app_metadata' ->> 'rol') = 'system_admin');
 
 CREATE POLICY "Superadmin actualiza gimnasios"
 ON gimnasios FOR UPDATE TO authenticated
-USING ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'))
-WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') IN ('superadmin'));
+USING ((auth.jwt() -> 'app_metadata' ->> 'rol') = 'system_admin')
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'rol') = 'system_admin');
 
 -- Políticas para Empleados
 DROP POLICY IF EXISTS "Empleados ven empleados de su gimnasio" ON empleados;
@@ -402,6 +425,50 @@ DROP TRIGGER IF EXISTS on_auth_user_created_tenant ON auth.users;
 CREATE TRIGGER on_auth_user_created_tenant
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user_tenant();
+
+
+-- =========================================================================
+-- REGISTRO DE PAGOS (RPC PARA BACKOFFICE)
+-- =========================================================================
+CREATE OR REPLACE FUNCTION registrar_pago_suscripcion(
+  p_gimnasio_id UUID,
+  p_monto DECIMAL,
+  p_meses INT,
+  p_notas TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_sub_id UUID;
+  v_fecha_fin DATE;
+  v_user_id UUID;
+  v_role TEXT;
+BEGIN
+  v_user_id := auth.uid();
+  v_role := (auth.jwt() -> 'app_metadata' ->> 'rol');
+
+  -- Validar que el usuario sea el superadmin global
+  IF v_user_id IS NULL OR v_role != 'system_admin' THEN
+    RAISE EXCEPTION 'No tienes permiso para registrar pagos (se requiere system_admin)';
+  END IF;
+
+  -- Calcular fecha_fin
+  v_fecha_fin := (NOW() AT TIME ZONE 'UTC') + (p_meses || ' months')::INTERVAL;
+
+  -- Insertar suscripción (esto dispara el trigger actualizar_estado_gimnasio)
+  INSERT INTO suscripciones (gimnasio_id, fecha_inicio, fecha_fin, estado, monto_pagado, meses_pagados, creado_por_admin, notas)
+  VALUES (p_gimnasio_id, (NOW() AT TIME ZONE 'UTC')::DATE, v_fecha_fin, 'activa', p_monto, p_meses, v_user_id, p_notas)
+  RETURNING id INTO v_sub_id;
+
+  -- Registrar evento
+  INSERT INTO eventos_suscripcion (gimnasio_id, tipo_evento, descripcion, usuario_admin)
+  VALUES (p_gimnasio_id, 'pago_registrado', 'Pago de $' || p_monto || ' por ' || p_meses || ' mes(es)', v_user_id);
+
+  RETURN jsonb_build_object('suscripcion_id', v_sub_id, 'fecha_fin', v_fecha_fin);
+END;
+$$;
 
 
 -- =========================================================================

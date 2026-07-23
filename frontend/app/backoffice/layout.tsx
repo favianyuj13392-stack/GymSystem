@@ -15,20 +15,20 @@ export default async function BackofficeLayout({
     redirect('/login');
   }
 
-  // Verificar que sea superadmin global (rol especial en auth.users o en app_metadata)
-  // En nuestra base, el superadmin global podría tener un gimnasio_id = null o
-  // estar manejado con un rol específico. Vamos a buscarlo en la tabla empleados.
-  const { data: adminData } = await supabase
-    .from('empleados')
-    .select('rol')
-    .eq('id', user.id)
-    .single();
+  // Verificar que sea el dueño del SaaS a través de los metadatos de JWT
+  const jwtData = user.app_metadata as { rol?: string };
+  if (jwtData?.rol !== 'system_admin') {
+    // Si no está en el JWT (por un tema de actualización del token),
+    // intentamos buscarlo en la tabla directamente como fallback.
+    const { data: adminData } = await supabase
+      .from('empleados')
+      .select('rol')
+      .eq('id', user.id)
+      .single();
 
-  // Para el backoffice global necesitamos asegurarnos de que el usuario es el dueño del SaaS
-  // Podemos asumirlo si su rol es superadmin y quizás un flag adicional o chequeo de ID.
-  // Por ahora lo simplificamos a superadmin.
-  if (adminData?.rol !== 'superadmin') {
-    redirect('/');
+    if (adminData?.rol !== 'system_admin') {
+       redirect('/');
+    }
   }
 
   return (

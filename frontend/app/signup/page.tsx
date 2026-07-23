@@ -38,9 +38,8 @@ export default function SignUpPage() {
       }
 
       if (data.user) {
-        // En un caso real con email confirmation activado, mostraríamos un mensaje.
-        // Aquí asumimos que pueden entrar directamente o los redirigimos al dashboard.
-        router.push('/admin/dashboard')
+        // Redirigir a la vista de pendiente de activación para que un admin procese el pago
+        router.push('/pendiente-activacion')
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

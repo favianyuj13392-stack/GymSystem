@@ -49,40 +49,18 @@ export default function NuevoPagoPage() {
       const fechaFin = new Date();
       fechaFin.setMonth(fechaFin.getMonth() + meses);
 
-      // 1. Crear suscripción
-      const { data: suscripcion, error: subError } = await supabase
-        .from('suscripciones')
-        .insert({
-          gimnasio_id: gimnasioId,
-          fecha_inicio: fechaInicio.toISOString().split('T')[0],
-          fecha_fin: fechaFin.toISOString().split('T')[0],
-          estado: 'activa',
-          monto_pagado: parseFloat(monto),
-          meses_pagados: meses,
-          creado_por_admin: user.user.id,
-          notas,
-        })
-        .select()
-        .single();
-
-      if (subError) throw subError;
-
-      // 2. Actualizar gimnasio con referencia a suscripción activa
-      await supabase
-        .from('gimnasios')
-        .update({
-          suscripcion_activa_id: suscripcion.id,
-          activo_hasta: suscripcion.fecha_fin,
-        })
-        .eq('id', gimnasioId);
-
-      // 3. Registrar evento
-      await supabase.from('eventos_suscripcion').insert({
-        gimnasio_id: gimnasioId,
-        tipo_evento: 'pago_registrado',
-        descripcion: `Pago de $${monto} por ${meses} mes(es)`,
-        usuario_admin: user.user.id,
+      // Llamar al RPC para procesar todo el pago en una transacción desde la base de datos
+      const { data, error: rpcError } = await supabase.rpc('registrar_pago_suscripcion', {
+        p_gimnasio_id: gimnasioId,
+        p_monto: parseFloat(monto),
+        p_meses: meses,
+        p_notas: notas
       });
+
+      if (rpcError) throw rpcError;
+
+      // Refrescar sesión para actualizar cualquier token local
+      await supabase.auth.refreshSession();
 
       // Redirigir al dashboard
       router.push('/backoffice/suscripciones');
