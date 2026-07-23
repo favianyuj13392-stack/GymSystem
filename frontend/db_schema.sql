@@ -204,6 +204,57 @@ CREATE TRIGGER trg_set_tenant_id_pagos BEFORE INSERT ON pagos FOR EACH ROW EXECU
 CREATE TRIGGER trg_set_tenant_id_planes BEFORE INSERT ON planes FOR EACH ROW EXECUTE FUNCTION set_tenant_id();
 CREATE TRIGGER trg_set_tenant_id_configuraciones BEFORE INSERT ON configuraciones FOR EACH ROW EXECUTE FUNCTION set_tenant_id();
 
+-- =========================================================================
+-- FLUJO DE REGISTRO / ONBOARDING (NUEVOS TENANTS)
+-- =========================================================================
+-- Función para ejecutarse cuando un usuario se registra vía Auth de Supabase (Signup)
+CREATE OR REPLACE FUNCTION public.handle_new_user_tenant()
+RETURNS trigger AS $$
+DECLARE
+  nuevo_gimnasio_id UUID;
+  gimnasio_nombre TEXT;
+  usuario_nombre TEXT;
+BEGIN
+  -- Extraer datos del user_metadata (enviados desde el frontend durante el signup)
+  gimnasio_nombre := NEW.raw_user_meta_data->>'nombre_gimnasio';
+  usuario_nombre := NEW.raw_user_meta_data->>'full_name';
+
+  -- Solo proceder si es un registro "Dueño de Gimnasio" (viene con nombre_gimnasio)
+  IF gimnasio_nombre IS NOT NULL THEN
+    -- 1. Crear el nuevo gimnasio
+    INSERT INTO public.gimnasios (nombre, estado_suscripcion)
+    VALUES (gimnasio_nombre, 'prueba')
+    RETURNING id INTO nuevo_gimnasio_id;
+
+    -- 2. Crear el empleado asociado con rol superadmin
+    INSERT INTO public.empleados (id, gimnasio_id, nombre, email, rol)
+    VALUES (NEW.id, nuevo_gimnasio_id, COALESCE(usuario_nombre, 'Admin'), NEW.email, 'superadmin');
+
+    -- 3. Actualizar el app_metadata del usuario para inyectar gimnasio_id y rol
+    -- IMPORTANTE: Supabase Auth utiliza app_metadata en el JWT para el RLS
+    UPDATE auth.users
+    SET raw_app_meta_data = jsonb_set(
+      jsonb_set(
+        COALESCE(raw_app_meta_data, '{}'::jsonb),
+        '{gimnasio_id}',
+        to_jsonb(nuevo_gimnasio_id)
+      ),
+      '{rol}',
+      '"superadmin"'
+    )
+    WHERE id = NEW.id;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger que se dispara después de crear un usuario en auth.users
+DROP TRIGGER IF EXISTS on_auth_user_created_tenant ON auth.users;
+CREATE TRIGGER on_auth_user_created_tenant
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user_tenant();
+
 -- 5. Configuración de Seguridad en Cascadas
 -- Se recomienda revisar que todas las Foreign Keys tengan 'ON DELETE CASCADE' o 'SET NULL'
 -- para evitar bloqueos transaccionales huérfanos al borrar registros.
