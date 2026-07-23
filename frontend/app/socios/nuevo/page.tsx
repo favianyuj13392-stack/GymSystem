@@ -24,8 +24,19 @@ export default function NuevoSocioPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successData, setSuccessData] = useState<any>(null);
 
+  // Cámara e integración web
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [videoStream]);
 
   useEffect(() => {
     const fetchPlanes = async () => {
@@ -44,6 +55,60 @@ export default function NuevoSocioPage() {
     fetchPlanes();
   }, []);
 
+  const startCamera = async () => {
+    setErrorMessage('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 400, height: 400, facingMode: 'user' }
+      });
+      setVideoStream(stream);
+      setIsCameraActive(true);
+      
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err: any) {
+      console.error('Error accediendo a la cámara:', err);
+      setErrorMessage('No se pudo acceder a la cámara. Asegúrate de otorgar los permisos necesarios.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+    }
+    setIsCameraActive(false);
+    setVideoStream(null);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Modo espejo natural (escala horizontal negativa)
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoRef.current, 0, 0, 400, 400);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `captured_socio_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            setFoto(file);
+            setPreviewUrl(URL.createObjectURL(file));
+            setStatus('idle');
+            setErrorMessage('');
+          }
+        }, 'image/jpeg', 0.9);
+      }
+      stopCamera();
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -59,6 +124,7 @@ export default function NuevoSocioPage() {
   };
 
   const clearForm = () => {
+    stopCamera();
     setFormData({
       nombre: '',
       apellido: '',
@@ -71,7 +137,6 @@ export default function NuevoSocioPage() {
     setFoto(null);
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const resetSuccess = () => {
@@ -340,7 +405,15 @@ export default function NuevoSocioPage() {
               
               <div className="flex-1 flex flex-col items-center justify-center">
                 <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-full border-4 border-white shadow-xl overflow-hidden bg-slate-200 relative group flex items-center justify-center mb-8">
-                  {previewUrl ? (
+                  {isCameraActive ? (
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted 
+                      className="w-full h-full object-cover scale-x-[-1]" 
+                    />
+                  ) : previewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
@@ -348,49 +421,62 @@ export default function NuevoSocioPage() {
                   )}
                   
                   {/* Overlay en hover para cambiar imagen */}
-                  {previewUrl && status === 'idle' && (
+                  {previewUrl && !isCameraActive && status === 'idle' && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white font-medium drop-shadow-md">Cambiar Foto</span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full px-4">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    capture="user"
-                    className="hidden" 
-                    ref={cameraInputRef} 
-                    onChange={handleFileChange}
-                  />
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    ref={fileInputRef} 
-                    onChange={handleFileChange}
-                  />
-                  
-                  <button
-                    type="button"
-                    onClick={() => cameraInputRef.current?.click()}
-                    disabled={status === 'uploading' || status === 'saving'}
-                    className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white py-3 px-4 rounded-xl font-medium transition-colors disabled:opacity-50 shadow-md"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
-                    Tomar Foto
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={status === 'uploading' || status === 'saving'}
-                    className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 px-4 rounded-xl font-medium transition-colors disabled:opacity-50 shadow-sm"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                    Subir Archivo
-                  </button>
-                </div>
+                {isCameraActive ? (
+                  <div className="flex flex-col sm:flex-row gap-4 w-full px-4">
+                    <button
+                      type="button"
+                      onClick={capturePhoto}
+                      className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl font-bold transition-all shadow-md cursor-pointer hover:shadow-emerald-600/20"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      Capturar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={stopCamera}
+                      className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-750 text-white py-3 px-4 rounded-xl font-bold transition-all shadow-sm cursor-pointer"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-4 w-full px-4">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      ref={fileInputRef} 
+                      onChange={handleFileChange}
+                    />
+                    
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      disabled={status === 'uploading' || status === 'saving'}
+                      className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white py-3 px-4 rounded-xl font-medium transition-colors disabled:opacity-50 shadow-md cursor-pointer"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /></svg>
+                      Tomar Foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={status === 'uploading' || status === 'saving'}
+                      className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-3 px-4 rounded-xl font-medium transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                      Subir Archivo
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
