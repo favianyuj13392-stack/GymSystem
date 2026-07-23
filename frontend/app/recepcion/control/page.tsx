@@ -331,16 +331,16 @@ export default function RecepcionControlPage() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen lg:h-[calc(100vh-4rem)] lg:m-8 lg:gap-8 bg-slate-50">
+    <div className="h-screen bg-black bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/15 via-zinc-950 to-black text-slate-100 p-6 lg:p-10 flex flex-col lg:flex-row gap-6 lg:gap-8 font-sans overflow-hidden">
       
       {/* Pestañas para mobile/tablet */}
-      <div className="flex lg:hidden bg-slate-100 p-1.5 rounded-2xl mx-4 mt-4 shrink-0 border border-slate-200">
+      <div className="flex lg:hidden bg-zinc-900/60 p-1.5 rounded-2xl mx-4 mt-4 shrink-0 border border-zinc-800">
         <button
           onClick={() => setActiveTab('scanner')}
           className={`flex-1 py-3 rounded-xl text-sm font-black transition-all ${
             activeTab === 'scanner'
-              ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
-              : 'text-slate-500 hover:text-slate-700'
+              ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20'
+              : 'text-zinc-400 hover:text-white'
           }`}
         >
           Escanear / Acceso
@@ -349,22 +349,22 @@ export default function RecepcionControlPage() {
           onClick={() => setActiveTab('list')}
           className={`flex-1 py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${
             activeTab === 'list'
-              ? 'bg-white text-slate-800 shadow-sm border border-slate-200/50'
-              : 'text-slate-500 hover:text-slate-700'
+              ? 'bg-amber-600 text-white shadow-lg shadow-amber-500/20'
+              : 'text-zinc-400 hover:text-white'
           }`}
         >
           Socios en el Gym
-          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
+          <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-xs font-bold border border-green-500/30">
             {sociosActivos.length}
           </span>
         </button>
       </div>
-
+ 
       {/* Columna Izquierda: Escáner y Resultados */}
       <div className={`flex-1 flex flex-col gap-6 h-full min-w-0 p-4 lg:p-0 ${activeTab === 'scanner' ? 'flex' : 'hidden lg:flex'}`}>
         
         {/* Lector de QR de Video */}
-        <div className={`bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 flex flex-col items-center justify-center relative min-h-[300px] ${status === 'idle' ? 'block' : 'hidden lg:block'}`}>
+        <div className={`bg-zinc-900/40 rounded-[2rem] border border-zinc-800 overflow-hidden shrink-0 flex flex-col items-center justify-center relative min-h-[300px] ${status === 'idle' ? 'block' : 'hidden lg:block'}`}>
           {!isCameraActive ? (
             <div className="p-8 text-center flex flex-col items-center justify-center">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 border border-amber-500/20">
@@ -373,13 +373,13 @@ export default function RecepcionControlPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-800">Cámara Inactiva</h3>
-              <p className="text-zinc-500 text-xs mt-1 max-w-xs leading-relaxed">
+              <h3 className="text-lg font-bold text-white">Cámara Inactiva</h3>
+              <p className="text-zinc-400 text-xs mt-1 max-w-xs leading-relaxed">
                 Por motivos de rendimiento y privacidad, la cámara está apagada. Hacé clic abajo para activarla e iniciar el escaneo de accesos.
               </p>
               <button
                 onClick={() => setIsCameraActive(true)}
-                className="mt-5 bg-amber-500 hover:bg-amber-600 text-black text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/10 active:scale-95"
+                className="mt-5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
               >
                 Activar Cámara
               </button>
@@ -388,13 +388,13 @@ export default function RecepcionControlPage() {
             <div className="p-8 text-center text-red-500">
               <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               <p className="font-bold">No se pudo acceder a la cámara</p>
-              <p className="text-sm mt-2 text-slate-500">Por favor, verifica los permisos del navegador o conecta una cámara web.</p>
+              <p className="text-sm mt-2 text-zinc-400">Por favor, verifica los permisos del navegador o conecta una cámara web.</p>
             </div>
           ) : (
             <div className="w-full h-full relative">
               <div id="qr-reader" className="w-full h-full object-cover border-none !border-0"></div>
               {/* Overlay estilizado para el escáner */}
-              <div className="absolute inset-0 pointer-events-none border-[12px] border-slate-900/10 z-10 flex flex-col items-center justify-between py-6">
+              <div className="absolute inset-0 pointer-events-none border-[12px] border-zinc-950/20 z-10 flex flex-col items-center justify-between py-6">
                  <div className="bg-black/50 text-white px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide backdrop-blur-md">CÁMARA EN VIVO</div>
                  <div className="w-48 h-48 border-4 border-white/60 rounded-[2rem] shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]"></div>
                  <div></div>
@@ -402,65 +402,65 @@ export default function RecepcionControlPage() {
             </div>
           )}
         </div>
-
+ 
         {/* Zona de Resultado */}
-        <div className="flex-1 bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden relative">
+        <div className="flex-1 bg-zinc-900/40 rounded-[2rem] border border-zinc-800 overflow-hidden relative">
           {renderPanel()}
         </div>
       </div>
-
+ 
       {/* Columna Derecha: Socios en el Gym */}
-      <div className={`w-full lg:w-[480px] flex flex-col bg-white lg:rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden shrink-0 h-full lg:h-full ${activeTab === 'list' ? 'flex p-4 lg:p-0' : 'hidden lg:flex'}`}>
-        <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+      <div className={`w-full lg:w-[480px] flex flex-col bg-zinc-900/40 lg:rounded-[2rem] border border-zinc-800 overflow-hidden shrink-0 h-full lg:h-full ${activeTab === 'list' ? 'flex p-4 lg:p-0' : 'hidden lg:flex'}`}>
+        <div className="p-6 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
               <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
               Socios en el Gym
             </h2>
-            <p className="text-sm text-slate-500 mt-1 font-medium">{sociosActivos.length} personas actualmente</p>
+            <p className="text-sm text-zinc-400 mt-1 font-medium">{sociosActivos.length} personas actualmente</p>
           </div>
           <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-4 bg-zinc-950/30 custom-scrollbar">
           {sociosActivos.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+            <div className="h-full flex flex-col items-center justify-center text-zinc-500 p-6 text-center">
               <svg className="w-16 h-16 mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 12H4M8 16l-4-4 4-4M16 8l4 4-4 4" /></svg>
               <p className="text-lg font-medium">El gimnasio está vacío.</p>
-              <p className="text-sm mt-1">Los socios aparecerán aquí cuando escaneen su entrada.</p>
+              <p className="text-sm mt-1 text-zinc-650">Los socios aparecerán aquí cuando escaneen su entrada.</p>
             </div>
           ) : (
             <ul className="space-y-4">
               {sociosActivos.map((socio) => (
                 <li 
                   key={socio.id} 
-                  className={`bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 flex items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all ${
+                  className={`bg-zinc-900/60 p-4 lg:p-5 rounded-2xl border border-zinc-800 flex items-center justify-between gap-4 hover:border-zinc-700/60 transition-all ${
                     removingId === socio.id ? 'opacity-0 scale-95 duration-300 pointer-events-none' : 'opacity-100 scale-100 duration-300'
                   }`}
                 >
                   <div className="flex items-center gap-4 min-w-0 w-full">
-                    <div className="relative w-14 h-14 lg:w-20 lg:h-20 rounded-full overflow-hidden bg-slate-100 shrink-0 border-2 border-green-100">
+                    <div className="relative w-14 h-14 lg:w-20 lg:h-20 rounded-full overflow-hidden bg-zinc-950 shrink-0 border-2 border-green-900/50">
                       {socio.foto_url ? (
                         <Image loader={cloudinaryLoader} src={socio.foto_url} alt={socio.nombre} fill className="object-cover" sizes="(max-width: 1024px) 56px, 80px" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <div className="w-full h-full flex items-center justify-center text-zinc-500">
                            <svg className="w-6 h-6 lg:w-10 lg:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         </div>
                       )}
                     </div>
                     <div className="min-w-0 truncate flex-1">
-                      <p className="text-base lg:text-lg font-bold text-slate-800 truncate">{socio.nombre}</p>
-                      <p className="text-xs text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <p className="text-base lg:text-lg font-bold text-white truncate">{socio.nombre}</p>
+                      <p className="text-xs text-zinc-400 font-medium flex items-center gap-1 mt-0.5">
+                        <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         Entró a las {new Date(socio.horaEntrada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
-
+ 
                   <button
                     onClick={() => handleDarSalida(socio.id)}
                     disabled={removingId === socio.id}
-                    className="shrink-0 flex items-center justify-center w-10 h-10 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-200 rounded-xl transition-colors group"
+                    className="shrink-0 flex items-center justify-center w-10 h-10 bg-zinc-950 hover:bg-red-950/40 text-zinc-550 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 rounded-xl transition-colors group cursor-pointer"
                     title="Dar Salida"
                   >
                     <svg className="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
