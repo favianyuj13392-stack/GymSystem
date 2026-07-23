@@ -18,17 +18,7 @@ export default async function BackofficeLayout({
   // Verificar que sea el dueño del SaaS a través de los metadatos de JWT
   const jwtData = user.app_metadata as { rol?: string };
   if (jwtData?.rol !== 'system_admin') {
-    // Si no está en el JWT (por un tema de actualización del token),
-    // intentamos buscarlo en la tabla directamente como fallback.
-    const { data: adminData } = await supabase
-      .from('empleados')
-      .select('rol')
-      .eq('id', user.id)
-      .single();
-
-    if (adminData?.rol !== 'system_admin') {
-       redirect('/');
-    }
+    redirect('/');
   }
 
   return (

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS suscripciones (
   gimnasio_id UUID NOT NULL REFERENCES gimnasios(id) ON DELETE CASCADE,
   fecha_inicio DATE NOT NULL,
   fecha_fin DATE NOT NULL,
-  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'expirada', 'cancelada')),
+  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'expirada', 'cancelada', 'renovada')),
   monto_pagado DECIMAL(10, 2) NOT NULL,
   moneda TEXT DEFAULT 'ARS',
   meses_pagados INTEGER NOT NULL DEFAULT 1,
@@ -126,6 +126,7 @@ CREATE TRIGGER trg_actualizar_estado_gimnasio
 CREATE OR REPLACE FUNCTION expirar_suscripciones_vencidas()
 RETURNS void
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
   v_suscripcion RECORD;
@@ -463,16 +464,20 @@ BEGIN
     RAISE EXCEPTION 'Los meses deben estar entre 1 y 36';
   END IF;
 
-  -- Validar existencia del gimnasio y que no tenga ya una suscripción activa
+  -- Validar existencia del gimnasio
   IF NOT EXISTS (SELECT 1 FROM gimnasios WHERE id = p_gimnasio_id) THEN
     RAISE EXCEPTION 'Gimnasio no encontrado';
   END IF;
 
+  -- Si ya existe una suscripción activa, la marcamos como renovada/cancelada
+  -- para que la nueva tome vigencia de forma exclusiva.
   IF EXISTS (
     SELECT 1 FROM suscripciones
     WHERE gimnasio_id = p_gimnasio_id AND estado = 'activa' AND fecha_fin >= CURRENT_DATE
   ) THEN
-    RAISE EXCEPTION 'Este gimnasio ya tiene una suscripción activa';
+    UPDATE suscripciones
+    SET estado = 'renovada'
+    WHERE gimnasio_id = p_gimnasio_id AND estado = 'activa';
   END IF;
 
   -- Calcular fecha_fin en UTC

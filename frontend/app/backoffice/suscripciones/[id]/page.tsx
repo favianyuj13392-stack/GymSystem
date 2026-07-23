@@ -2,25 +2,6 @@
 
 import { useEffect, useState, use } from 'react';
 import { createClient } from '@/utils/supabase/client';
-
-interface Suscripcion {
-  id: string;
-  fecha_inicio: string;
-  fecha_fin: string;
-  estado: string;
-  monto_pagado: number;
-  meses_pagados: number;
-  notas: string;
-  creado_at: string;
-}
-
-interface Evento {
-  id: string;
-  tipo_evento: string;
-  descripcion: string;
-  creado_at: string;
-}
-
 import { useRouter } from 'next/navigation';
 
 interface Suscripcion {
