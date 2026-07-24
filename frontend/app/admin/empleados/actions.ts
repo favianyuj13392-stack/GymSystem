@@ -12,14 +12,16 @@ async function verificarAdmin() {
   
   const { data: empleado, error: dbError } = await supabaseServer
     .from('empleados')
-    .select('rol')
+    .select('rol, gimnasio_id')
     .eq('id', user.id)
     .single();
     
-  if (dbError || empleado?.rol !== 'admin') {
+  if (dbError || !empleado || (empleado.rol !== 'admin' && empleado.rol !== 'superadmin')) {
     throw new Error('No autorizado: Se requiere rol de administrador');
   }
-  return user;
+  
+  const gymId = empleado.gimnasio_id || (user.app_metadata as any)?.gimnasio_id || '00000000-0000-0000-0000-000000000001';
+  return { user, gymId };
 }
 
 export async function obtenerEmpleados() {
@@ -44,13 +46,18 @@ export async function obtenerEmpleados() {
 
 export async function crearEmpleado(nombre: string, apellido: string, email: string, rol: 'admin' | 'empleado', contrasena: string) {
   try {
-    await verificarAdmin();
+    const { gymId } = await verificarAdmin();
 
-    // 1. Crear el usuario en la sección de autenticación de Supabase (con el rol de administrador del servidor)
+    // 1. Crear el usuario en auth.users inyectando gimnasio_id y estado activo
     const { data: authData, error: authError } = await supabaseServer.auth.admin.createUser({
       email,
       password: contrasena,
-      email_confirm: true
+      email_confirm: true,
+      app_metadata: {
+        gimnasio_id: gymId,
+        estado: 'activo',
+        rol: rol,
+      },
     });
 
     if (authError || !authData?.user) {
@@ -63,6 +70,7 @@ export async function crearEmpleado(nombre: string, apellido: string, email: str
       .from('empleados')
       .insert({
         id: authData.user.id,
+        gimnasio_id: gymId,
         nombre,
         apellido,
         email,
@@ -71,7 +79,6 @@ export async function crearEmpleado(nombre: string, apellido: string, email: str
 
     if (dbError) {
       console.error('Error al registrar empleado en base de datos:', dbError);
-      // Intenta revertir la creación de autenticación
       await supabaseServer.auth.admin.deleteUser(authData.user.id);
       return { success: false, error: dbError.message || 'No se pudo registrar la información del empleado.' };
     }
@@ -85,10 +92,10 @@ export async function crearEmpleado(nombre: string, apellido: string, email: str
 
 export async function eliminarEmpleado(id: string) {
   try {
-    const user = await verificarAdmin();
+    const adminData = await verificarAdmin();
     
     // 1. Verificar si el usuario que ejecuta la acción es el mismo que se va a eliminar
-    if (user.id === id) {
+    if (adminData.user.id === id) {
       return { success: false, error: 'No podés eliminar tu propia cuenta de administrador.' };
     }
 

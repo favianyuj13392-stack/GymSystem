@@ -44,8 +44,14 @@ export default function RecepcionControlPage() {
     setStatus('idle');
     setResultado(null);
     isProcessingRef.current = false;
-    if (scannerRef.current && scannerRef.current.getState() === 2 /* PAUSED */) {
-      scannerRef.current.resume();
+    if (scannerRef.current) {
+      try {
+        if (typeof scannerRef.current.getState === 'function' && scannerRef.current.getState() === 3 /* PAUSED */) {
+          scannerRef.current.resume();
+        }
+      } catch (err) {
+        console.warn('Escáner no listo para reanudar:', err);
+      }
     }
   };
 
@@ -79,7 +85,13 @@ export default function RecepcionControlPage() {
           isProcessingRef.current = true;
 
           if (scannerRef.current) {
-            scannerRef.current.pause(true);
+            try {
+              if (typeof scannerRef.current.getState === 'function' && scannerRef.current.getState() === 2) {
+                scannerRef.current.pause(true);
+              }
+            } catch (err) {
+              console.warn('Escáner no activo para pausar (modo imagen/archivo):', err);
+            }
           }
 
           setStatus('loading');

@@ -88,6 +88,7 @@ export async function obtenerPlanesDisponibles() {
   const { data, error } = await supabaseServer
     .from('planes')
     .select('*')
+    .eq('activo', true)
     .order('precio', { ascending: true });
     
   if (error) {
