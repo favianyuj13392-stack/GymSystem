@@ -81,6 +81,20 @@ export default function ModalEdicion({
     e.preventDefault();
     setErrorMsg('');
 
+    if (dni && !/^\d+$/.test(dni.trim())) {
+      setErrorMsg('El DNI debe contener únicamente números.');
+      return;
+    }
+
+    if (fechaNacimiento) {
+      const birthDate = new Date(fechaNacimiento);
+      const today = new Date();
+      if (birthDate > today) {
+        setErrorMsg('La fecha de nacimiento no puede ser una fecha futura.');
+        return;
+      }
+    }
+
     try {
       let publicId = socio.foto_url || undefined;
 
@@ -194,7 +208,7 @@ export default function ModalEdicion({
                   type="text"
                   required
                   value={dni}
-                  onChange={(e) => setDni(e.target.value)}
+                  onChange={(e) => setDni(e.target.value.replace(/\D/g, ''))}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
                   disabled={status === 'uploading' || status === 'saving'}
                 />
@@ -204,7 +218,7 @@ export default function ModalEdicion({
                 <input
                   type="tel"
                   value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
+                  onChange={(e) => setTelefono(e.target.value.replace(/\D/g, ''))}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
                   disabled={status === 'uploading' || status === 'saving'}
                 />

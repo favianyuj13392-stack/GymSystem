@@ -110,12 +110,16 @@ export async function renovarMembresia(socioId: string, planId: string, montoPag
     // 2. Obtener los meses del nuevo plan
     const { data: plan, error: planError } = await supabaseServer
       .from('planes')
-      .select('duracion_meses')
+      .select('duracion_meses, activo')
       .eq('id', planId)
       .single();
 
     if (planError || !plan) {
       return { success: false, error: 'No se encontró el plan especificado.' };
+    }
+
+    if (plan.activo === false) {
+      return { success: false, error: 'El plan seleccionado está inactivo y no se puede renovar con él.' };
     }
 
     const meses = plan.duracion_meses || 1;

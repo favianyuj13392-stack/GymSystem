@@ -16,15 +16,23 @@ export async function obtenerProductosInventario() {
     }
 
     try {
-      const parsed = JSON.parse(productosRow.valor);
+      let parsed = JSON.parse(productosRow.valor);
+      
+      // Desempaquetar matrices anidadas si existen por datos corruptos antiguos
+      while (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
+        parsed = parsed.flat();
+      }
+
       if (Array.isArray(parsed)) {
-        return parsed.map((item: any) => ({
-          id: item.id || String(Math.random()),
-          nombre: item.nombre || 'Producto sin nombre',
-          precio: Number(item.precio) || 0,
-          stock: typeof item.stock === 'number' ? item.stock : 50,
-          categoria: item.categoria || 'General',
-        })) as ProductoInventario[];
+        return parsed
+          .filter((item: any) => item && typeof item === 'object' && !Array.isArray(item))
+          .map((item: any) => ({
+            id: item.id || String(Math.random()),
+            nombre: item.nombre || 'Producto sin nombre',
+            precio: Number(item.precio) || 0,
+            stock: typeof item.stock === 'number' ? item.stock : 50,
+            categoria: item.categoria || 'General',
+          })) as ProductoInventario[];
       }
     } catch (e) {
       console.error('Error parseando productos_venta:', e);
@@ -38,12 +46,16 @@ export async function obtenerProductosInventario() {
 
 export async function guardarListaProductos(productos: ProductoInventario[]) {
   try {
+    // Aplanar y limpiar el arreglo para garantizar que sea un arreglo 1D sin anidamiento
+    let flatList = Array.isArray(productos) ? productos.flat(Infinity) : [];
+    flatList = flatList.filter((item: any) => item && typeof item === 'object' && !Array.isArray(item) && item.nombre);
+
     const { error } = await supabaseServer
       .from('configuraciones')
       .upsert(
         {
           clave: 'productos_venta',
-          valor: JSON.stringify(productos),
+          valor: JSON.stringify(flatList),
           descripcion: 'Catálogo e inventario de productos de venta',
         },
         { onConflict: 'clave' }

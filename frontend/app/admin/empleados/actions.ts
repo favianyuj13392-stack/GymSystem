@@ -10,17 +10,22 @@ async function verificarAdmin() {
     throw new Error('No autorizado: Sesión no válida');
   }
   
-  const { data: empleado, error: dbError } = await supabaseServer
+  const jwtRole = (user.app_metadata as any)?.rol;
+  const isJwtAdmin = jwtRole === 'admin' || jwtRole === 'superadmin';
+
+  const { data: empleado } = await supabaseServer
     .from('empleados')
     .select('rol, gimnasio_id')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
     
-  if (dbError || !empleado || (empleado.rol !== 'admin' && empleado.rol !== 'superadmin')) {
+  const isDbAdmin = empleado && (empleado.rol === 'admin' || empleado.rol === 'superadmin');
+
+  if (!isJwtAdmin && !isDbAdmin) {
     throw new Error('No autorizado: Se requiere rol de administrador');
   }
   
-  const gymId = empleado.gimnasio_id || (user.app_metadata as any)?.gimnasio_id || '00000000-0000-0000-0000-000000000001';
+  const gymId = empleado?.gimnasio_id || (user.app_metadata as any)?.gimnasio_id || '00000000-0000-0000-0000-000000000001';
   return { user, gymId };
 }
 

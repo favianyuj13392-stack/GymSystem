@@ -115,6 +115,27 @@ async function procesarMembresia(socio: any) {
         };
       }
     }
+
+    // 3c. Verificar si el socio YA está dentro del gimnasio
+    const hoyObj = new Date();
+    const startOfDay = new Date(hoyObj.getFullYear(), hoyObj.getMonth(), hoyObj.getDate()).toISOString();
+    
+    const { data: asistenciasHoy } = await supabaseServer
+      .from('asistencias')
+      .select('id, tipo')
+      .eq('socio_id', socio.id)
+      .gte('registrado_at', startOfDay)
+      .order('registrado_at', { ascending: false })
+      .limit(1);
+
+    if (asistenciasHoy && asistenciasHoy.length > 0 && asistenciasHoy[0].tipo === 'entrada') {
+      return {
+        status: 'denegado',
+        socio,
+        membresia,
+        razon: 'El socio ya se encuentra dentro del gimnasio.'
+      };
+    }
   }
 
   // 4. Si está vigente y cumple reglas, registrar la entrada

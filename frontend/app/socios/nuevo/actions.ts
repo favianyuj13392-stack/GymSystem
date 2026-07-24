@@ -6,6 +6,7 @@ export async function obtenerPlanes() {
   const { data, error } = await supabaseServer
     .from('planes')
     .select('id, nombre, precio, duracion_meses')
+    .eq('activo', true)
     .order('precio', { ascending: true });
 
   if (error) {
@@ -54,13 +55,17 @@ export async function crearSocio(datosSocio: {
     // 2. Obtener la duración del plan seleccionado (meses), el precio y el nombre
     const { data: plan, error: planError } = await supabaseServer
       .from('planes')
-      .select('duracion_meses, precio, nombre')
+      .select('duracion_meses, precio, nombre, activo')
       .eq('id', datosSocio.plan_id)
       .single();
 
     if (planError || !plan) {
       console.error('Error obteniendo plan:', planError);
       return { success: false, error: 'No se pudo obtener la configuración del plan.' };
+    }
+
+    if (plan.activo === false) {
+      return { success: false, error: 'El plan seleccionado se encuentra inactivo y no se puede contratar.' };
     }
 
     const meses = plan.duracion_meses || 1;

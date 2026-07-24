@@ -110,7 +110,13 @@ export default function NuevoSocioPage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'dni' || name === 'telefono') {
+      const numericValue = value.replace(/\D/g, '');
+      setFormData({ ...formData, [name]: numericValue });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,6 +156,16 @@ export default function NuevoSocioPage() {
     
     if (!formData.nombre.trim() || !formData.apellido.trim() || !formData.dni.trim() || !formData.plan_id) {
       setErrorMessage('Por favor, completa los campos obligatorios (Nombre, Apellido, DNI y Plan).');
+      return;
+    }
+
+    if (!/^\d+$/.test(formData.dni.trim())) {
+      setErrorMessage('El DNI debe contener únicamente números.');
+      return;
+    }
+
+    if (formData.dni.trim().length < 4) {
+      setErrorMessage('El DNI debe contener al menos 4 números.');
       return;
     }
 

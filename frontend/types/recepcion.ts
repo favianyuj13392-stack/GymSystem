@@ -5,6 +5,7 @@ export type StatusAcceso = 'idle' | 'loading' | 'concedido' | 'vencido' | 'no_re
 export interface ResultadoAcceso {
   status: StatusAcceso;
   mensaje?: string;
+  razon?: string;
   socio?: Socio | null;
   membresia?: Membresia | null;
   asistenciaId?: string;

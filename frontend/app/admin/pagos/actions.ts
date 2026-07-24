@@ -171,7 +171,11 @@ export async function obtenerProductosConfigurados() {
 
     if (data && data.valor) {
       try {
-        return JSON.parse(data.valor);
+        let parsed = JSON.parse(data.valor);
+        while (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
+          parsed = parsed.flat();
+        }
+        return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         console.error('Error al parsear productos_venta:', e);
         return [];

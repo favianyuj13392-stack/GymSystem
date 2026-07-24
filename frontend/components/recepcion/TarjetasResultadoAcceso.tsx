@@ -135,5 +135,33 @@ export default function TarjetasResultadoAcceso({
     );
   }
 
+  if (status === 'denegado') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-amber-600 text-white rounded-[2rem] shadow-2xl p-8 animate-in zoom-in duration-300 relative overflow-hidden">
+        <button
+          type="button"
+          onClick={onReset}
+          className="absolute top-6 right-6 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div className="bg-white text-amber-600 rounded-full p-6 mb-6 shadow-xl">
+          <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h1 className="text-3xl lg:text-4xl font-black mb-3 tracking-tight text-center drop-shadow-md">
+          ACCESO DENEGADO
+        </h1>
+        <p className="text-base lg:text-lg font-bold opacity-95 text-center max-w-md bg-black/20 px-6 py-3 rounded-2xl border border-white/20">
+          {resultado.razon || 'El socio ya se encuentra registrado dentro del gimnasio.'}
+        </p>
+      </div>
+    );
+  }
+
   return null;
 }
