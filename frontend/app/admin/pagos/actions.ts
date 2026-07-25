@@ -2,6 +2,7 @@
 
 import { supabaseServer } from '@/lib/supabaseServer';
 import { createClient } from '@/utils/supabase/server';
+import { readConfigFallback } from '@/lib/configStore';
 
 async function verificarAdmin() {
   const supabase = await createClient();
@@ -164,14 +165,16 @@ export async function obtenerProductosConfigurados() {
       .eq('clave', 'productos_venta')
       .maybeSingle();
 
+    let rawValue = data?.valor;
+
     if (error) {
-      console.error('Error al obtener productos configurados:', error);
-      return [];
+      console.warn('Tabla configuraciones no disponible, usando respaldo local:', error.message);
+      rawValue = readConfigFallback('productos_venta');
     }
 
-    if (data && data.valor) {
+    if (rawValue) {
       try {
-        let parsed = JSON.parse(data.valor);
+        let parsed = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
         while (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
           parsed = parsed.flat();
         }
@@ -183,7 +186,14 @@ export async function obtenerProductosConfigurados() {
     }
     return [];
   } catch (error) {
-    console.error('Error fatal en obtenerProductosConfigurados:', error);
+    console.error('Error fatal en obtenerProductosConfigurados, intentando respaldo:', error);
+    const fallback = readConfigFallback('productos_venta');
+    if (fallback) {
+      try {
+        let parsed = typeof fallback === 'string' ? JSON.parse(fallback) : fallback;
+        return Array.isArray(parsed) ? parsed.flat() : [];
+      } catch (e) {}
+    }
     return [];
   }
 }

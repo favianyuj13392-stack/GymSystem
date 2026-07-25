@@ -99,7 +99,7 @@ export default function InventarioPage() {
       setProductos(updatedList);
       setIsModalOpen(false);
     } else {
-      setErrorForm(res.error || 'Error al guardar el producto.');
+      setErrorForm((res as any).error || 'Error al guardar el producto.');
     }
   };
 

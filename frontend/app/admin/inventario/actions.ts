@@ -2,6 +2,7 @@
 
 import { supabaseServer } from '@/lib/supabaseServer';
 import { ProductoInventario } from '@/types/inventario';
+import { readConfigFallback, writeConfigFallback } from '@/lib/configStore';
 
 export async function obtenerProductosInventario() {
   try {
@@ -11,14 +12,23 @@ export async function obtenerProductosInventario() {
       .eq('clave', 'productos_venta')
       .maybeSingle();
 
-    if (error || !productosRow || !productosRow.valor) {
+    let rawValue = productosRow?.valor;
+
+    if (error || !rawValue) {
+      if (error?.message?.includes('configuraciones')) {
+        console.warn('Tabla configuraciones no encontrada en Supabase, leyendo de respaldo local.');
+        rawValue = readConfigFallback('productos_venta');
+      }
+    }
+
+    if (!rawValue) {
       return [];
     }
 
     try {
-      let parsed = JSON.parse(productosRow.valor);
+      let parsed = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
       
-      // Desempaquetar matrices anidadas si existen por datos corruptos antiguos
+      // Desempaquetar matrices anidadas
       while (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
         parsed = parsed.flat();
       }
@@ -40,6 +50,10 @@ export async function obtenerProductosInventario() {
     return [];
   } catch (error) {
     console.error('Error obteniendo productos de inventario:', error);
+    const fallback = readConfigFallback('productos_venta');
+    if (fallback) {
+      return Array.isArray(fallback) ? fallback : [];
+    }
     return [];
   }
 }
@@ -50,18 +64,27 @@ export async function guardarListaProductos(productos: ProductoInventario[]) {
     let flatList = Array.isArray(productos) ? productos.flat(Infinity) : [];
     flatList = flatList.filter((item: any) => item && typeof item === 'object' && !Array.isArray(item) && item.nombre);
 
-    const { data: existente } = await supabaseServer
+    const jsonString = JSON.stringify(flatList);
+
+    // Intentar en Supabase primero
+    const { data: existente, error: selectErr } = await supabaseServer
       .from('configuraciones')
       .select('id')
       .eq('clave', 'productos_venta')
       .maybeSingle();
+
+    if (selectErr && selectErr.message?.includes('configuraciones')) {
+      console.warn('Tabla configuraciones no existe en Supabase, guardando en respaldo local.');
+      writeConfigFallback('productos_venta', jsonString);
+      return { success: true };
+    }
 
     let saveError = null;
 
     if (existente) {
       const { error } = await supabaseServer
         .from('configuraciones')
-        .update({ valor: JSON.stringify(flatList) })
+        .update({ valor: jsonString })
         .eq('id', existente.id);
       saveError = error;
     } else {
@@ -69,20 +92,25 @@ export async function guardarListaProductos(productos: ProductoInventario[]) {
         .from('configuraciones')
         .insert({
           clave: 'productos_venta',
-          valor: JSON.stringify(flatList),
+          valor: jsonString,
           descripcion: 'Catálogo e inventario de productos de venta',
         });
       saveError = error;
     }
 
     if (saveError) {
-      console.error('Error guardando lista de productos:', saveError);
-      return { success: false, error: saveError.message || 'No se pudo guardar la lista de productos.' };
+      console.warn('Error guardando en Supabase, usando respaldo local:', saveError);
+      writeConfigFallback('productos_venta', jsonString);
+      return { success: true };
     }
 
+    // Mantener sincronizado el respaldo local también
+    writeConfigFallback('productos_venta', jsonString);
     return { success: true };
   } catch (error: any) {
-    console.error('Error fatal al guardar lista de productos:', error);
-    return { success: false, error: error.message || 'Error interno del servidor.' };
+    console.error('Error en guardarListaProductos, aplicando respaldo local:', error);
+    const flatList = Array.isArray(productos) ? productos.flat(Infinity) : [];
+    writeConfigFallback('productos_venta', JSON.stringify(flatList));
+    return { success: true };
   }
 }
