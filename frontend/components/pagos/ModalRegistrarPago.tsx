@@ -38,9 +38,23 @@ export default function ModalRegistrarPago({
 
   useEffect(() => {
     if (isOpen) {
-      // Cargar socios y catálogo de productos
+      // Cargar socios y catálogo de productos con respaldo en localStorage
       obtenerListaSocios().then((res) => setSocios(res as Socio[]));
-      obtenerProductosConfigurados().then((res) => setProductos(res as ProductoConfigurado[]));
+      obtenerProductosConfigurados().then((res) => {
+        if (res && res.length > 0) {
+          setProductos(res as ProductoConfigurado[]);
+        } else if (typeof window !== 'undefined') {
+          try {
+            const cached = localStorage.getItem('gym_inventario_productos_v1');
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setProductos(parsed as ProductoConfigurado[]);
+              }
+            }
+          } catch (e) {}
+        }
+      });
 
       // Reset campos
       setTipo('Producto');
