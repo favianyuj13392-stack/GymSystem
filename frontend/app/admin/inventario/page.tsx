@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { ProductoInventario } from '@/types/inventario';
 import { obtenerProductosInventario, guardarListaProductos } from './actions';
 
+const LOCAL_STORAGE_KEY = 'gym_inventario_productos_v1';
+
 export default function InventarioPage() {
   const [productos, setProductos] = useState<ProductoInventario[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,14 +23,51 @@ export default function InventarioPage() {
 
   const fetchProductos = async () => {
     setLoading(true);
-    const data = await obtenerProductosInventario();
-    setProductos(data);
+    let serverData: ProductoInventario[] = [];
+
+    try {
+      serverData = await obtenerProductosInventario();
+    } catch (e) {
+      console.warn('Error fetching server inventory:', e);
+    }
+
+    if (serverData && serverData.length > 0) {
+      setProductos(serverData);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serverData));
+        } catch (e) {}
+      }
+    } else {
+      // Fallback a localStorage si el servidor aún no tiene registros o falla
+      if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setProductos(parsed);
+            }
+          }
+        } catch (e) {}
+      }
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchProductos();
   }, []);
+
+  const persistirProductos = (newList: ProductoInventario[]) => {
+    setProductos(newList);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newList));
+      } catch (e) {}
+    }
+    guardarListaProductos(newList);
+  };
 
   const abrirModalCrear = () => {
     setEditingId(null);
@@ -93,14 +132,9 @@ export default function InventarioPage() {
       updatedList = [...productos, nuevoProd];
     }
 
-    const res = await guardarListaProductos(updatedList);
+    persistirProductos(updatedList);
     setSaving(false);
-    if (res.success) {
-      setProductos(updatedList);
-      setIsModalOpen(false);
-    } else {
-      setErrorForm((res as any).error || 'Error al guardar el producto.');
-    }
+    setIsModalOpen(false);
   };
 
   const handleAdjustStock = async (id: string, delta: number) => {
@@ -112,15 +146,13 @@ export default function InventarioPage() {
       return p;
     });
 
-    setProductos(updatedList);
-    await guardarListaProductos(updatedList);
+    persistirProductos(updatedList);
   };
 
   const handleEliminarProducto = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar este producto del inventario?')) return;
     const updatedList = productos.filter((p) => p.id !== id);
-    setProductos(updatedList);
-    await guardarListaProductos(updatedList);
+    persistirProductos(updatedList);
   };
 
   const productosFiltrados = productos.filter((p) =>
