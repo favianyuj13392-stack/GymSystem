@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { SocioActivoGym } from '@/types/recepcion';
 
@@ -14,8 +15,40 @@ export default function ListaSociosEnGym({
   removingId,
   onRegistrarSalida,
 }: ListaSociosEnGymProps) {
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
   const cloudinaryLoader = ({ src, width, quality }: { src: string; width: number; quality?: number }) => {
     return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/w_${width},q_${quality || 75}/${src}`;
+  };
+
+  const formatHoraBolivia = (horaStr: string) => {
+    if (!horaStr) return '--:--';
+    try {
+      const date = new Date(horaStr);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleTimeString('es-BO', {
+          timeZone: 'America/La_Paz',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+      }
+    } catch (e) {
+      // Fallback
+    }
+    return horaStr.length > 5 ? horaStr.slice(11, 16) : horaStr;
+  };
+
+  const handleSalidaClick = (asistenciaId: string) => {
+    if (confirmingId === asistenciaId) {
+      setConfirmingId(null);
+      onRegistrarSalida(asistenciaId);
+    } else {
+      setConfirmingId(asistenciaId);
+      setTimeout(() => {
+        setConfirmingId((current) => (current === asistenciaId ? null : current));
+      }, 4000);
+    }
   };
 
   return (
@@ -72,10 +105,10 @@ export default function ListaSociosEnGym({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{socio.nombre}</p>
+                  <p className="text-sm font-bold text-white truncate">{socio.nombre} {socio.apellido || ''}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
-                      {socio.horaEntrada}
+                    <span className="text-[11px] font-mono bg-zinc-900 border border-zinc-800 text-amber-400 font-bold px-2 py-0.5 rounded">
+                      {formatHoraBolivia(socio.horaEntrada)}
                     </span>
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-400">
                       <span className="w-1 h-1 rounded-full bg-green-500"></span>
@@ -87,9 +120,15 @@ export default function ListaSociosEnGym({
 
               <button
                 type="button"
-                onClick={() => onRegistrarSalida(socio.id)}
+                onClick={() => handleSalidaClick(socio.id)}
                 disabled={removingId === socio.id}
-                className="bg-zinc-900 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-900/50 p-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1"
+                className={`p-2 px-3 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border ${
+                  removingId === socio.id
+                    ? 'bg-zinc-900 text-zinc-500 border-zinc-800'
+                    : confirmingId === socio.id
+                    ? 'bg-red-600 text-white border-red-500 shadow-md shadow-red-500/20 animate-pulse'
+                    : 'bg-zinc-900 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 border-zinc-800 hover:border-red-900/50'
+                }`}
                 title="Registrar Salida Manual"
               >
                 {removingId === socio.id ? (
@@ -97,6 +136,8 @@ export default function ListaSociosEnGym({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
+                ) : confirmingId === socio.id ? (
+                  <span>¿Confirmar?</span>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

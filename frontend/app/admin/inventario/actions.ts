@@ -50,20 +50,34 @@ export async function guardarListaProductos(productos: ProductoInventario[]) {
     let flatList = Array.isArray(productos) ? productos.flat(Infinity) : [];
     flatList = flatList.filter((item: any) => item && typeof item === 'object' && !Array.isArray(item) && item.nombre);
 
-    const { error } = await supabaseServer
+    const { data: existente } = await supabaseServer
       .from('configuraciones')
-      .upsert(
-        {
+      .select('id')
+      .eq('clave', 'productos_venta')
+      .maybeSingle();
+
+    let saveError = null;
+
+    if (existente) {
+      const { error } = await supabaseServer
+        .from('configuraciones')
+        .update({ valor: JSON.stringify(flatList) })
+        .eq('id', existente.id);
+      saveError = error;
+    } else {
+      const { error } = await supabaseServer
+        .from('configuraciones')
+        .insert({
           clave: 'productos_venta',
           valor: JSON.stringify(flatList),
           descripcion: 'Catálogo e inventario de productos de venta',
-        },
-        { onConflict: 'clave' }
-      );
+        });
+      saveError = error;
+    }
 
-    if (error) {
-      console.error('Error guardando lista de productos:', error);
-      return { success: false, error: 'No se pudo guardar la lista de productos.' };
+    if (saveError) {
+      console.error('Error guardando lista de productos:', saveError);
+      return { success: false, error: saveError.message || 'No se pudo guardar la lista de productos.' };
     }
 
     return { success: true };
