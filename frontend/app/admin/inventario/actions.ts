@@ -1,116 +1,129 @@
 "use server"
 
 import { supabaseServer } from '@/lib/supabaseServer';
+import { createClient } from '@/utils/supabase/server';
 import { ProductoInventario } from '@/types/inventario';
-import { readConfigFallback, writeConfigFallback } from '@/lib/configStore';
 
-export async function obtenerProductosInventario() {
+async function obtenerGymIdActual() {
   try {
-    const { data: productosRow, error } = await supabaseServer
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const gymId = (user.app_metadata as any)?.gimnasio_id;
+      if (gymId) return gymId;
+    }
+  } catch (e) {}
+  return '00000000-0000-0000-0000-000000000001';
+}
+
+export async function obtenerProductosInventario(): Promise<ProductoInventario[]> {
+  try {
+    const gymId = await obtenerGymIdActual();
+
+    // 1. Intentar consultar en la tabla relacional real 'productos'
+    const { data, error } = await supabaseServer
+      .from('productos')
+      .select('id, nombre, precio, stock, categoria')
+      .eq('gimnasio_id', gymId)
+      .eq('activo', true)
+      .order('nombre', { ascending: true });
+
+    if (!error && data) {
+      return data.map((item) => ({
+        id: item.id,
+        nombre: item.nombre,
+        precio: Number(item.precio),
+        stock: Number(item.stock),
+        categoria: item.categoria || 'General',
+      }));
+    }
+
+    // 2. Fallback a la tabla configuraciones si productos no existiera aún en el esquema remoto
+    const { data: productosRow } = await supabaseServer
       .from('configuraciones')
-      .select('*')
+      .select('valor')
       .eq('clave', 'productos_venta')
       .maybeSingle();
 
-    let rawValue = productosRow?.valor;
-
-    if (error || !rawValue) {
-      if (error?.message?.includes('configuraciones')) {
-        console.warn('Tabla configuraciones no encontrada en Supabase, leyendo de respaldo local.');
-        rawValue = readConfigFallback('productos_venta');
-      }
-    }
-
-    if (!rawValue) {
-      return [];
-    }
-
-    try {
-      let parsed = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
-      
-      // Desempaquetar matrices anidadas
-      while (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
-        parsed = parsed.flat();
-      }
-
-      if (Array.isArray(parsed)) {
-        return parsed
-          .filter((item: any) => item && typeof item === 'object' && !Array.isArray(item))
-          .map((item: any) => ({
+    if (productosRow?.valor) {
+      try {
+        let parsed = JSON.parse(productosRow.valor);
+        while (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0])) {
+          parsed = parsed.flat();
+        }
+        if (Array.isArray(parsed)) {
+          return parsed.map((item: any) => ({
             id: item.id || String(Math.random()),
             nombre: item.nombre || 'Producto sin nombre',
             precio: Number(item.precio) || 0,
             stock: typeof item.stock === 'number' ? item.stock : 50,
             categoria: item.categoria || 'General',
-          })) as ProductoInventario[];
-      }
-    } catch (e) {
-      console.error('Error parseando productos_venta:', e);
+          }));
+        }
+      } catch (e) {}
     }
+
     return [];
   } catch (error) {
     console.error('Error obteniendo productos de inventario:', error);
-    const fallback = readConfigFallback('productos_venta');
-    if (fallback) {
-      return Array.isArray(fallback) ? fallback : [];
-    }
     return [];
   }
 }
 
 export async function guardarListaProductos(productos: ProductoInventario[]) {
   try {
-    // Aplanar y limpiar el arreglo para garantizar que sea un arreglo 1D sin anidamiento
+    const gymId = await obtenerGymIdActual();
     let flatList = Array.isArray(productos) ? productos.flat(Infinity) : [];
     flatList = flatList.filter((item: any) => item && typeof item === 'object' && !Array.isArray(item) && item.nombre);
 
-    const jsonString = JSON.stringify(flatList);
+    // Persistir cada producto en la tabla relacional productos
+    for (const prod of flatList) {
+      const payload = {
+        gimnasio_id: gymId,
+        nombre: prod.nombre.trim(),
+        precio: Number(prod.precio) || 0,
+        stock: Math.max(0, Number(prod.stock) || 0),
+        categoria: prod.categoria || 'General',
+        activo: true,
+      };
 
-    // Intentar en Supabase primero
-    const { data: existente, error: selectErr } = await supabaseServer
-      .from('configuraciones')
-      .select('id')
-      .eq('clave', 'productos_venta')
-      .maybeSingle();
+      // Si el id es un UUID válido, intentar actualizar o insertar
+      const isUuid = typeof prod.id === 'string' && prod.id.length === 36 && prod.id.includes('-');
 
-    if (selectErr && selectErr.message?.includes('configuraciones')) {
-      console.warn('Tabla configuraciones no existe en Supabase, guardando en respaldo local.');
-      writeConfigFallback('productos_venta', jsonString);
-      return { success: true };
+      if (isUuid) {
+        const { error: updateErr } = await supabaseServer
+          .from('productos')
+          .update(payload)
+          .eq('id', prod.id)
+          .eq('gimnasio_id', gymId);
+
+        if (updateErr) {
+          await supabaseServer.from('productos').insert({ ...payload, id: prod.id });
+        }
+      } else {
+        await supabaseServer.from('productos').insert(payload);
+      }
     }
 
-    let saveError = null;
-
-    if (existente) {
-      const { error } = await supabaseServer
+    // Sincronizar también en la tabla configuraciones por retrocompatibilidad
+    try {
+      const jsonString = JSON.stringify(flatList);
+      const { data: existente } = await supabaseServer
         .from('configuraciones')
-        .update({ valor: jsonString })
-        .eq('id', existente.id);
-      saveError = error;
-    } else {
-      const { error } = await supabaseServer
-        .from('configuraciones')
-        .insert({
-          clave: 'productos_venta',
-          valor: jsonString,
-          descripcion: 'Catálogo e inventario de productos de venta',
-        });
-      saveError = error;
-    }
+        .select('id')
+        .eq('clave', 'productos_venta')
+        .maybeSingle();
 
-    if (saveError) {
-      console.warn('Error guardando en Supabase, usando respaldo local:', saveError);
-      writeConfigFallback('productos_venta', jsonString);
-      return { success: true };
-    }
+      if (existente) {
+        await supabaseServer.from('configuraciones').update({ valor: jsonString }).eq('id', existente.id);
+      } else {
+        await supabaseServer.from('configuraciones').insert({ clave: 'productos_venta', valor: jsonString });
+      }
+    } catch (e) {}
 
-    // Mantener sincronizado el respaldo local también
-    writeConfigFallback('productos_venta', jsonString);
     return { success: true };
   } catch (error: any) {
-    console.error('Error en guardarListaProductos, aplicando respaldo local:', error);
-    const flatList = Array.isArray(productos) ? productos.flat(Infinity) : [];
-    writeConfigFallback('productos_venta', JSON.stringify(flatList));
-    return { success: true };
+    console.error('Error guardando lista de productos:', error);
+    return { success: false, error: error.message || 'Error al guardar la lista de productos.' };
   }
 }
