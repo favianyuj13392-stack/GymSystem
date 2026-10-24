@@ -4,8 +4,8 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
 export async function iniciarSesion(formData: FormData) {
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
+  const email = (formData.get('email') as string)?.trim().toLowerCase()
+  const password = (formData.get('password') as string)?.trim()
 
   if (!email || !password) {
     return { error: 'Por favor, completa todos los campos.' }

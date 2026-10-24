@@ -125,7 +125,7 @@ export default async function Home() {
             </svg>
           </Link>
           <a
-            href="https://mistyrose-otter-694958.hostingersite.com"
+            href="https://darkosync.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800/80 px-8 py-4 rounded-2xl text-sm font-bold transition-all flex items-center justify-center active:scale-95"
@@ -392,7 +392,7 @@ export default async function Home() {
         <p className="text-[10px] text-zinc-600">
           © {new Date().getFullYear()} Todos los derechos reservados. Redirección oficial de soporte técnico a{" "}
           <a
-            href="https://mistyrose-otter-694958.hostingersite.com"
+            href="https://darkosync.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-amber-500/80 hover:text-amber-500 hover:underline"

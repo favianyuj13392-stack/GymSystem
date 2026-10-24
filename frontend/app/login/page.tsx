@@ -188,7 +188,7 @@ export default function LoginPage() {
           <div className="text-center text-sm pt-4">
             <span className="text-zinc-500">¿No tienes cuenta? </span>
             <a 
-              href="https://mistyrose-otter-694958.hostingersite.com"
+              href="https://darkosync.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-amber-500 hover:underline font-bold"
