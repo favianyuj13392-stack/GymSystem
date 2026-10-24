@@ -33,6 +33,21 @@ export default async function Home() {
   return (
     <div className="min-h-screen w-full bg-[#020204] text-slate-100 flex flex-col justify-between font-sans relative overflow-hidden">
       
+      {/* Video de fondo para el banner de la landing */}
+      <div className="absolute top-0 left-0 right-0 h-[750px] md:h-[880px] overflow-hidden pointer-events-none z-0">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover opacity-25 filter brightness-75 contrast-125 scale-105"
+        >
+          <source src="/darkogymfondo.mp4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#020204]/80 via-[#020204]/40 to-[#020204]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#020204]/30 to-[#020204]" />
+      </div>
+
       {/* Glowes de fondo decorativos premium (Amber/Obsidian blur effects) */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[300px] bg-gradient-to-b from-amber-500/10 to-transparent blur-[120px] rounded-full pointer-events-none z-0"></div>
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none z-0"></div>
